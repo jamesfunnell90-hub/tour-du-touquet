@@ -16,6 +16,7 @@ const ui = {
   tab: lsGet("tab", "live"), roundId: null, groupIdx: lsGet("group", 0), segId: null, hole: {},
   mode: "hole", board: "cup", boardBasis: lsGet("boardBasis", "stableford"), cardsRound: null, more: null, draft: null, dirty: false,
   unit: lsGet("unit", null), scorer: lsGet("scorer", ""), pinOk: lsGet("pin:" + TRIP_ID, false),
+  welcomed: lsGet("welcomed", false),
 };
 
 // ---------- helpers ----------
@@ -89,12 +90,24 @@ function render(force) {
   if (st.error) html += `<div class="banner">${esc(st.error)}</div>`;
   if (!st.online) html += `<div class="banner">Offline. Scores are saved on this phone and will sync when you have signal.</div>`;
   else if (st.pending) html += `<div class="banner ok">Syncing…</div>`;
-  html += ({ live: vLive, score: vScore, board: vBoard, more: vMore })[ui.tab]();
-  if (ui.tab !== "live" && !(ui.tab === "more" && ui.more)) html += `<div class="footart" aria-hidden="true">${MOTTO}<div class="art"></div></div>`;
+  html += !ui.welcomed ? vWelcome() : ({ live: vLive, score: vScore, board: vBoard, more: vMore })[ui.tab]();
+  if (ui.welcomed && ui.tab !== "live" && !(ui.tab === "more" && ui.more)) html += `<div class="footart" aria-hidden="true">${MOTTO}<div class="art"></div></div>`;
   view.innerHTML = html;
 }
 document.addEventListener("focusout", () => setTimeout(() => { if (pendingRender) render(); }, 0));
 const MOTTO = `<div class="motto">LIBERTÉ<i>•</i>ÉGALITÉ<i>•</i>GOLF</div>`;
+
+// ---------- WELCOME ----------
+function vWelcome() {
+  const t = trip();
+  const players = Object.entries(t.players || {}).sort((a, b) => (t.teams[a[1].team]?.order || 0) - (t.teams[b[1].team]?.order || 0) || a[1].name.localeCompare(b[1].name));
+  return `<section class="panel hero">${MOTTO}<div class="art"></div></section>
+    <section class="panel pad" style="text-align:center;display:flex;flex-direction:column;gap:16px">
+      <div><b style="font-size:20px">Who are you?</b><div class="small muted" style="margin-top:4px">So scores and setup changes on this phone are attributed to you</div></div>
+      <div class="chips" style="justify-content:center">${players.map(([id, p]) => `<button class="chipbtn" data-act="welcomePick" data-id="${id}"><span class="sw" style="background:${tcol(p.team)}"></span>${esc(p.name)}</button>`).join("")}</div>
+      <button class="btn sm" data-act="welcomeSkip" style="align-self:center">I'm just watching</button>
+    </section>`;
+}
 
 // ---------- LIVE ----------
 function allResults() {
@@ -131,7 +144,7 @@ function vLive() {
     }
   }
   h += `<h2>Schedule</h2><section class="panel list">${rounds().map(x => {
-    const times = (x.groups || []).map(g => g.time).filter(Boolean);
+    const times = sortedGroups(x).map(g => g.time).filter(Boolean);
     const set = (x.groups || []).some(g => (g.playerIds || []).length);
     return `<div class="item" style="cursor:default"><div><div><b>${dayLabel(x.date)} · ${esc(x.label)}</b></div><div class="sub">${esc(club(x.clubId)?.name || "?")}${courseOf(x) && club(x.clubId).courses.length > 1 ? " · " + esc(courseOf(x).name) : ""} · ${set ? "groups set" : "groups to be confirmed"}</div></div><span class="chip ${x.id === t.currentRound ? "live" : ""}">${times[0] || "TBC"}</span></div>`;
   }).join("")}</section>`;
@@ -650,6 +663,8 @@ view.addEventListener("click", async e => {
     case "board": ui.board = b.dataset.id; break;
     case "cardsRound": ui.cardsRound = b.dataset.id; break;
     case "boardBasis": ui.boardBasis = b.dataset.id; lsSet("boardBasis", ui.boardBasis); break;
+    case "welcomePick": ui.scorer = b.dataset.id; lsSet("scorer", ui.scorer); ui.welcomed = true; lsSet("welcomed", true); toast("Welcome, " + pname(ui.scorer)); break;
+    case "welcomeSkip": ui.welcomed = true; lsSet("welcomed", true); break;
     case "betAdd": {
       const rid = b.dataset.id; const t = structuredClone(trip());
       t.bets = t.bets || []; t.bets.push({ id: "b" + Date.now(), roundId: rid, type: $(`#bt-${rid}`).value, hole: $(`#bh-${rid}`).value, winner: $(`#bw-${rid}`).value, note: $(`#bn-${rid}`).value.trim() });
