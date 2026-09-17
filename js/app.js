@@ -400,6 +400,34 @@ function individualBoardFor(basis) {
     return basis === "stableford" ? b.total - a.total : a.total - b.total;
   });
 }
+function ordinal(n) {
+  const j = n % 10, k = n % 100;
+  if (j === 1 && k !== 11) return n + "st";
+  if (j === 2 && k !== 12) return n + "nd";
+  if (j === 3 && k !== 13) return n + "rd";
+  return n + "th";
+}
+// Personal summary row above the Individual leaderboard: where the scorer on this phone stands.
+function individualPersonalPanel(rows, cols, basis) {
+  const id = ui.scorer;
+  if (!id || !trip().players[id]) return "";
+  const idx = rows.findIndex(x => x.id === id);
+  if (idx === -1) return "";
+  const me = rows[idx], p = trip().players[id];
+  const rank = me.any ? idx + 1 : null;
+  const first = rows.find(x => x.any);
+  const above = rank && rank > 1 ? rows[idx - 1] : first;
+  const diffTo = other => other && other.id !== id ? Math.abs(me.total - other.total) : 0;
+  let thru = 0, total = 0;
+  for (const c of cols) { thru += me.cols[c.key]?.thru || 0; total += c.holes; }
+  return `<section class="panel"><div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font-family:var(--serif);font-weight:700;font-size:22px">${esc(p.name)}</span>
+      ${rank ? `<span class="chip live">Rank #${rank}</span>` : `<span class="small muted">No scores yet</span>`}
+    </div>
+    ${rank ? `<div class="tw"><table><tr><th class="l">${basis === "gross" ? "Gross" : basis === "net" ? "Net" : "Score"}</th><th>Rank</th><th>To ${rank > 1 ? ordinal(rank - 1) : "1st"}</th><th>To 1st</th><th>Holes left</th></tr>
+      <tr><td class="l tot">${me.total}</td><td class="rank">${rank}</td><td>${diffTo(above)}</td><td>${diffTo(first)}</td><td>${total - thru}</td></tr></table></div>` : ""}
+    </section>`;
+}
 // One hole's cell text for a display basis. "P" (picked up) shows as-is; net has no Stableford-style pick-up value.
 function cellForBasis(v, par, sh, basis) {
   if (!E.has(v)) return "·";
@@ -426,6 +454,7 @@ function vBoard() {
     const data = rounds();
     const cols = data.flatMap(r => courseOf(r) ? segmentsOf(r).filter(seg => seg.format !== "scramble").map(seg => ({ key: r.id + ":" + seg.id, label: `R${r.order || ""} ${E.segLabel(seg)}`, holes: E.segmentHoles(courseOf(r), seg).length })) : []);
     const rows = individualBoardFor(ui.boardBasis);
+    h += individualPersonalPanel(rows, cols, ui.boardBasis);
     h += `<section class="panel tw"><table><tr><th></th><th class="l">Player</th><th>Total</th>${cols.map(c => `<th>${c.label}</th>`).join("")}</tr>
       ${rows.map((x, i) => `<tr><td class="rank">${x.any ? i + 1 : ""}</td><td class="l">${sw(x.team)} <b>${esc(x.name)}</b> <span class="small muted">${esc(hcpText(trip().players[x.id]?.hcp))}</span></td><td class="tot">${x.any ? x.total : "–"}</td>${cols.map(c => { const v = x.cols[c.key]; return `<td>${v ? v.text + (v.thru < c.holes ? ` <span class="small muted">(${v.thru})</span>` : "") : "–"}</td>`; }).join("")}</tr>`).join("")}</table></section>
       <p class="note">${ui.boardBasis === "stableford" ? "Individual Stableford order of merit, best first." : ui.boardBasis === "net" ? "Individual net strokes, lowest first." : "Individual gross strokes, lowest first."} Scramble segments are left out. Brackets show holes played when a segment isn't finished.</p>`;
