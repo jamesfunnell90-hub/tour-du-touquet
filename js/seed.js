@@ -9,7 +9,7 @@ export function seedTrip() {
     fillPar: true,
     currentRound: "r1",
     teams: {
-      ab: { name: "Anywhere But", colour: "blue", order: 1 },
+      ab: { name: "Clean Shaven", colour: "blue", order: 1 },
       bb: { name: "Bushy Boys", colour: "claret", order: 2 },
     },
     players: {
