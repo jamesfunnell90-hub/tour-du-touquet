@@ -175,7 +175,7 @@ function groupCard(r, g) {
   const done = ids.length ? Math.min(...ids.map(id => holes.filter(n => E.has(E.val(scoresOf(r.id), id, n))).length)) : 0;
   const scr = segmentsOf(r).some(seg => seg.format === "scramble");
   const tdone = scr ? Math.max(0, ...[...new Set(ids.map(id => trip().players[id]?.team))].map(t => holes.filter(n => E.has(E.val(scoresOf(r.id), E.teamKey(t), n))).length)) : 0;
-  return `<div class="gcard"><div><b>${esc(groupLabel(r, g))}</b> <span class="muted">· ${Math.max(done, tdone)} holes in</span></div>${ids.length ? ids.map(id => `<div>${sw(trip().players[id]?.team)} ${esc(pname(id))}</div>`).join("") : '<div class="muted">To be confirmed</div>'}</div>`;
+  return `<div class="gcard"><div><b>${esc(groupLabel(r, g))}</b></div><div class="muted">${Math.max(done, tdone)} holes in</div>${ids.length ? ids.map(id => `<div>${sw(trip().players[id]?.team)} ${esc(pname(id))}</div>`).join("") : '<div class="muted">To be confirmed</div>'}</div>`;
 }
 
 // ---------- SCORE ----------
