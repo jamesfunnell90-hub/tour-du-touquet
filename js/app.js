@@ -33,6 +33,13 @@ const scoresOf = rid => S.state.scores[rid] || {};
 const ctxOf = r => ({ trip: trip(), course: courseOf(r), round: r, scores: scoresOf(r.id), players: trip().players });
 const dayLabel = d => { if (!d) return ""; const x = new Date(d + "T12:00:00"); return x.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); };
 const hcpText = h => (h === null || h === undefined || h === "" ? "hcp not set" : "hcp " + h);
+const courseHcpText = (p, r, c) => (p.hcp === null || p.hcp === undefined || p.hcp === "" ? "hcp not set" : "hcp " + E.courseHandicap(p.hcp, c, r.teeId));
+function groupLabel(r, g) {
+  const ids = g.playerIds || [];
+  const teamsInGroup = new Set(ids.map(id => trip().players[id]?.team).filter(Boolean));
+  if (teamsInGroup.size === 1) return `${g.time || "TBC"} - ${tname([...teamsInGroup][0])}`;
+  return g.time || "TBC";
+}
 const sw = id => `<span class="sw" style="background:${tcol(id)}"></span>`;
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 1800); }
 function currentRound() {
@@ -167,7 +174,7 @@ function groupCard(r, g) {
   const done = ids.length ? Math.min(...ids.map(id => holes.filter(n => E.has(E.val(scoresOf(r.id), id, n))).length)) : 0;
   const scr = segmentsOf(r).some(seg => seg.format === "scramble");
   const tdone = scr ? Math.max(0, ...[...new Set(ids.map(id => trip().players[id]?.team))].map(t => holes.filter(n => E.has(E.val(scoresOf(r.id), E.teamKey(t), n))).length)) : 0;
-  return `<div class="gcard"><div><b>${esc(g.time || "TBC")}</b> <span class="muted">· ${Math.max(done, tdone)} holes in</span></div>${ids.length ? ids.map(id => `<div>${sw(trip().players[id]?.team)} ${esc(pname(id))}</div>`).join("") : '<div class="muted">To be confirmed</div>'}</div>`;
+  return `<div class="gcard"><div><b>${esc(groupLabel(r, g))}</b> <span class="muted">· ${Math.max(done, tdone)} holes in</span></div>${ids.length ? ids.map(id => `<div>${sw(trip().players[id]?.team)} ${esc(pname(id))}</div>`).join("") : '<div class="muted">To be confirmed</div>'}</div>`;
 }
 
 // ---------- SCORE ----------
@@ -183,7 +190,7 @@ function vScore() {
   const seg = segs.find(s => s.id === ui.segId);
   let h = "";
   if (rs.length > 1) h += `<div class="seg" role="group" aria-label="Round">${rs.map(x => `<button data-act="round" data-id="${x.id}" aria-pressed="${x.id === r.id}">${esc(x.label)}</button>`).join("")}</div>`;
-  h += `<div class="seg" role="group" aria-label="Group">${groups.map((x, i) => `<button data-act="group" data-i="${i}" aria-pressed="${i === ui.groupIdx}">${esc(x.time || "Group " + (i + 1))}</button>`).join("")}</div>`;
+  h += `<div class="seg" role="group" aria-label="Group">${groups.map((x, i) => `<button data-act="group" data-i="${i}" aria-pressed="${i === ui.groupIdx}">${esc(x.playerIds?.length ? groupLabel(r, x) : x.time || "Group " + (i + 1))}</button>`).join("")}</div>`;
   if (!g || !(g.playerIds || []).length) return h + `<div class="banner">No players in this group yet. Set the groups under More → Rounds.</div>`;
   if (!seg) return h + `<div class="banner">No segments set for this round.</div>`;
   if (segs.length > 1) h += `<div class="seg" role="group" aria-label="Segment">${segs.map(s => `<button data-act="seg" data-id="${s.id}" aria-pressed="${s.id === seg.id}">${esc(E.segLabel(s))}</button>`).join("")}</div>`;
@@ -238,7 +245,7 @@ function scoreRows(r, g, seg) {
       return { key: E.teamKey(t), team: true, teamId: t, name: tname(t), meta: `Team hcp ${th}`, shots: n => c.holesCount === 9 ? E.shotsOn(Math.round(th / 2), E.hole(c, n).strokeIndex, 9) : E.shotsOn(th, E.hole(c, n).strokeIndex, 18) };
     });
   }
-  return (g.playerIds || []).map(id => { const p = trip().players[id] || {}; return { key: id, team: false, teamId: p.team, name: p.name, meta: hcpText(p.hcp), shots: n => E.shotsFor(p.hcp, c, n, r) }; });
+  return (g.playerIds || []).map(id => { const p = trip().players[id] || {}; return { key: id, team: false, teamId: p.team, name: p.name, meta: courseHcpText(p, r, c), shots: n => E.shotsFor(p.hcp, c, n, r) }; });
 }
 function segmentSummary(r, seg) {
   const res = E.segmentResult(ctxOf(r), seg);
@@ -394,12 +401,12 @@ function setupView() {
     <div class="field"><span class="lbl">Players</span><div>${Object.values(d.players).filter(p => p.team === id).map(p => esc(p.name)).join(", ") || '<span class="muted">None. Assign players under Players.</span>'}</div>
     ${Object.values(d.players).some(p => p.team === id) ? "" : `<button class="btn sm danger" data-act="teamDel" data-team="${id}">Remove team</button>`}</div></section>`).join("") + `<button class="btn" data-act="teamAdd">+ Add team</button>`;
   if (ui.more === "players") return head("Players & handicaps") + `<section class="panel pad" style="display:flex;flex-direction:column;gap:8px">
-    <div class="row3 lbl"><span>Name</span><span>Hcp</span><span>Team</span><span></span></div>
-    ${Object.entries(d.players).map(([id, p]) => `<div class="row3"><input class="in" data-player="${id}" data-pf="name" value="${esc(p.name)}" aria-label="Name"><input class="in" data-player="${id}" data-pf="hcp" inputmode="decimal" value="${p.hcp ?? ""}" placeholder="?" aria-label="Handicap for ${esc(p.name)}">
+    <div class="row3 lbl"><span>Name</span><span>Index</span><span>Team</span><span></span></div>
+    ${Object.entries(d.players).map(([id, p]) => `<div class="row3"><input class="in" data-player="${id}" data-pf="name" value="${esc(p.name)}" aria-label="Name"><input class="in" data-player="${id}" data-pf="hcp" inputmode="decimal" value="${p.hcp ?? ""}" placeholder="?" aria-label="Handicap index for ${esc(p.name)}">
       <select class="in" data-player="${id}" data-pf="team" aria-label="Team">${teams(d).map(([tid, T]) => `<option value="${tid}" ${p.team === tid ? "selected" : ""}>${esc(T.name)}</option>`).join("")}</select>
       <button class="btn sm" data-act="playerDel" data-id="${id}" aria-label="Remove ${esc(p.name)}">✕</button></div>`).join("")}
     <button class="btn" data-act="playerAdd">+ Add player</button></section>
-    <p class="note">Use playing handicaps (whole numbers). Shots are spread over all 18 holes by stroke index, then each segment uses the shots on its own holes. Plus handicaps: enter as negative, e.g. -2.</p>`;
+    <p class="note">Enter each player's Handicap Index (whole numbers). Each round works out the Course Handicap for its own tee using that tee's slope and rating, then spreads the shots by stroke index. Plus handicaps: enter as negative, e.g. -2.</p>`;
   if (ui.more === "rounds") return head("Rounds") + `<section class="panel list">${Object.values(d.rounds).sort((a, b) => (a.order || 0) - (b.order || 0)).map(r => `<button class="item" data-act="openRound" data-id="${r.id}"><div><b>${esc(r.label)} · ${dayLabel(r.date)}${d.currentRound === r.id ? ' <span class="chip live">Current</span>' : ""}</b><div class="sub">${esc(club(r.clubId)?.name || "?")} · ${esc(courseOf(r)?.name || "?")} · ${esc(teeOf(r)?.name || "?")} · ${(r.segments || []).map(seg => E.segLabel(seg) + " " + E.FORMATS[seg.format || "tbc"].short).join(", ")}</div></div><span class="go">›</span></button>`).join("")}</section>
     <button class="btn" data-act="roundAdd">+ Add round</button>`;
   if (ui.more.startsWith("round:")) return roundEditor(d.rounds[ui.more.slice(6)]);

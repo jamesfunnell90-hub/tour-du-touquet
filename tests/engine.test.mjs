@@ -54,6 +54,25 @@ test("shotsOn edge cases", () => {
   assert.ok(E.shotsOn(-2, 16) === 0); // may be -0, which is mathematically 0 but fails Object.is-based assert.equal
 });
 
+// ---------- course handicap (slope-adjusted) ----------
+test("courseHandicap: Belle Dune Jaune (SSS 71.6, slope 125, par 72)", () => {
+  // 19 * 125/113 + (71.6 - 72) = 20.6177 -> 21
+  assert.equal(E.courseHandicap(19, belleDune, "jaune"), 21);
+  assert.ok(E.courseHandicap(0, belleDune, "jaune") === 0); // may be -0 (mathematically 0)
+});
+test("courseHandicap falls back to the raw index without rating data or a tee", () => {
+  assert.equal(E.courseHandicap(19, belleDune, "no-such-tee"), 19);
+  assert.equal(E.courseHandicap(19, belleDune, null), 19);
+});
+test("shotsFor applies the course handicap for the round's tee", () => {
+  const trip = makeTrip();
+  const round = { ...makeRound([]), teeId: "jaune" };
+  // James's index 19 -> course handicap 21 on Jaune. Hole 1 SI 12: shotsOn(21,12,18) = 1 + (12<=3?0) = 1... check below.
+  const ch = E.courseHandicap(19, belleDune, "jaune");
+  assert.equal(ch, 21);
+  assert.equal(E.shotsFor(19, belleDune, 1, round), E.shotsOn(ch, 12, 18));
+});
+
 // ---------- 2 & 3. teambestn single-hole worked examples ----------
 test("hole 1 (par 4, SI 12), best 1 of 3, Stableford: Bushy Boys win", () => {
   const trip = makeTrip();

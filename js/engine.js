@@ -73,12 +73,25 @@ export function shotsOn(h, si, scale = 18) {
   const g = -h;
   return -(Math.floor(g / scale) + (si > scale - (g % scale) ? 1 : 0));
 }
+// A player's handicap is a Handicap Index. Converts it to a Course Handicap for a specific
+// tee using that tee's slope and rating (standard formula: index * slope/113 + (rating - par)).
+// Falls back to the raw index (rounded) if the tee has no rating data, or no tee is given.
+export function courseHandicap(index, course, teeId) {
+  const idx = index || 0;
+  const tee = teeId && course.tees?.find(t => t.id === teeId);
+  const r = tee?.ratings?.men || tee?.ratings?.women;
+  if (!r || !r.slope) return Math.round(idx);
+  const rating = r.courseRating ?? r.sss;
+  const par = r.par ?? course.par;
+  return Math.round(idx * (r.slope / 113) + (rating - par));
+}
 // Shots for a player on hole n of a course, using the full-course allocation.
 export function shotsFor(hcp, course, n, round) {
   if (round && round.handicaps === false) return 0;
   const h = hole(course, n);
-  if (course.holesCount === 9) return shotsOn(Math.round((hcp || 0) / 2), h.strokeIndex, 9);
-  return shotsOn(hcp || 0, h.strokeIndex, 18);
+  const ch = round?.teeId ? courseHandicap(hcp, course, round.teeId) : Math.round(hcp || 0);
+  if (course.holesCount === 9) return shotsOn(Math.round(ch / 2), h.strokeIndex, 9);
+  return shotsOn(ch, h.strokeIndex, 18);
 }
 
 // ---------- scores ----------
@@ -361,7 +374,9 @@ export function matchResult(ctx, m, holes, seg) {
   if (!pa || !pb) { out.text = "Pick two players"; return out; }
   const basis = seg.basis || "stableford";
   const pct = Number(seg.allowance || 100) / 100;
-  const ha = Math.round((pa.hcp || 0) * pct), hb = Math.round((pb.hcp || 0) * pct);
+  const cha = round.teeId ? courseHandicap(pa.hcp, course, round.teeId) : Math.round(pa.hcp || 0);
+  const chb = round.teeId ? courseHandicap(pb.hcp, course, round.teeId) : Math.round(pb.hcp || 0);
+  const ha = Math.round(cha * pct), hb = Math.round(chb * pct);
   const diff = round.handicaps === false ? 0 : Math.abs(ha - hb);
   const receiver = ha > hb ? "a" : hb > ha ? "b" : null;
   let up = 0, played = 0;
