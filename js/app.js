@@ -14,7 +14,7 @@ const lsSet = (k, v) => { try { localStorage.setItem("tdt:ui:" + k, JSON.stringi
 let CLUBS = [];
 const ui = {
   tab: lsGet("tab", "live"), roundId: null, groupIdx: lsGet("group", 0), segId: null, hole: {},
-  mode: "hole", board: "cup", cardsRound: null, more: null, draft: null, dirty: false,
+  mode: "hole", board: "cup", boardBasis: lsGet("boardBasis", "stableford"), cardsRound: null, more: null, draft: null, dirty: false,
   unit: lsGet("unit", null), scorer: lsGet("scorer", ""), pinOk: lsGet("pin:" + TRIP_ID, false),
 };
 
@@ -202,11 +202,12 @@ function vScore() {
   const hk = `${r.id}:${ui.groupIdx}:${seg.id}`;
   if (!ui.hole[hk]) { const first = holes.find(n => rows.some(x => !E.has(E.val(scoresOf(r.id), x.key, n)))); ui.hole[hk] = first || holes[holes.length - 1]; }
   const n = ui.hole[hk], hi = holes.indexOf(n), ho = E.hole(c, n), par = E.parOf(c, r, n);
-  const len = E.holeLength(c, r.teeId, n, unit());
+  const lenM = E.holeLength(c, r.teeId, n, "m"), lenYd = E.holeLength(c, r.teeId, n, "yd");
+  const teeName = esc(teeOf(r)?.name || "");
   h += `<div class="strip">${holes.map(x => { const done = rows.every(rw => E.has(E.val(scoresOf(r.id), rw.key, x))); return `<button data-act="hole" data-n="${x}" class="${x === n ? "cur" : done ? "done" : ""}" aria-label="Hole ${x}">${x}</button>`; }).join("")}</div>`;
   h += `<section class="panel"><div class="hole">${ho.image ? `<img src="${esc(ho.image)}" alt="Hole ${n} layout">` : `<div class="noimg">No hole picture yet</div>`}
     <div><div class="hno">${n}</div><div class="hname">${esc(ho.name || "")}</div>
-    <div class="facts"><div><span>Par</span><b>${par}</b></div><div><span>SI</span><b>${ho.strokeIndex}</b></div><div><span>${esc(teeOf(r)?.name || "")} <button class="unit" data-act="unit">${unit()}</button></span><b>${len ?? "–"}</b></div></div>
+    <div class="facts"><div><span>Par</span><b>${par}</b></div><div><span>SI</span><b>${ho.strokeIndex}</b></div><div><span>${teeName} m</span><b>${lenM ?? "–"}</b></div><div><span>${teeName} yd</span><b>${lenYd ?? "–"}</b></div></div>
     ${ho.parAlt ? `<div class="small muted" style="margin-top:6px">Par ${ho.parAlt} option ${r.useAltPar ? "in use" : "available"}</div>` : ""}</div></div>`;
   const countIdsByTeam = {};
   if (seg.format === "teambestn") {
@@ -305,6 +306,49 @@ async function fillParForHole(r, seg, n) {
 }
 
 // ---------- LEADERBOARD ----------
+const BOARD_BASES = [["stableford", "Stableford"], ["net", "Net"], ["gross", "Gross"]];
+function boardBasisToggle() {
+  return `<div class="seg" role="group" aria-label="Scoring basis">${BOARD_BASES.map(([k, l]) => `<button data-act="boardBasis" data-id="${k}" aria-pressed="${ui.boardBasis === k}">${l}</button>`).join("")}</div>`;
+}
+// One player's total for a segment under a display basis: gross strokes, net strokes, or Stableford points.
+function segStat(ctx, id, seg, basis) {
+  const r = E.playerSegment(ctx, id, seg);
+  if (basis === "stableford") return { value: r.pts, thru: r.thru, text: r.pts + " pts" };
+  let s = 0, any = false;
+  for (const hRow of r.holes) if (typeof hRow.g === "number") { s += basis === "gross" ? hRow.g : hRow.g - hRow.sh; any = true; }
+  return { value: any ? s : null, thru: r.thru, text: any ? String(s) : "–" };
+}
+function individualBoardFor(basis) {
+  const rows = {};
+  for (const [id, p] of Object.entries(trip().players || {})) rows[id] = { id, name: p.name, team: p.team, total: 0, any: false, cols: {} };
+  for (const r of rounds()) {
+    const c = courseOf(r); if (!c) continue;
+    const ctx = ctxOf(r);
+    for (const seg of segmentsOf(r)) {
+      if (seg.format === "scramble") continue;
+      for (const id of E.roundPlayers(r)) {
+        if (!rows[id]) continue;
+        const st = segStat(ctx, id, seg, basis);
+        if (st.thru === 0 && st.value == null) continue;
+        rows[id].cols[r.id + ":" + seg.id] = st;
+        if (st.value != null) { rows[id].total += st.value; rows[id].any = true; }
+      }
+    }
+  }
+  return Object.values(rows).sort((a, b) => {
+    if (a.any !== b.any) return a.any ? -1 : 1;
+    if (!a.any) return 0;
+    return basis === "stableford" ? b.total - a.total : a.total - b.total;
+  });
+}
+// One hole's cell text for a display basis. "P" (picked up) shows as-is; net has no Stableford-style pick-up value.
+function cellForBasis(v, par, sh, basis) {
+  if (!E.has(v)) return "·";
+  if (v === "P") return "P";
+  if (basis === "gross") return String(v);
+  if (basis === "net") return String(E.netOf(v, sh));
+  return String(E.stablefordPts(v, par, sh) ?? "–");
+}
 function vBoard() {
   const segs = [["cup", "Team cup"], ["ind", "Players"], ["cards", "Cards"], ["bets", "Side bets"]];
   let h = `<div class="seg" role="group" aria-label="Leaderboard">${segs.map(([k, l]) => `<button data-act="board" data-id="${k}" aria-pressed="${ui.board === k}">${l}</button>`).join("")}</div>`;
@@ -317,24 +361,40 @@ function vBoard() {
       <tr><td class="l"><b>Total</b></td><td></td>${tm.map(([id]) => `<td class="tot" style="font-size:30px;color:${tcol(id)}">${fmtPts(cup.tot[id])}</td>`).join("")}</tr></table></section>
       <p class="note">Brackets show how a live segment stands right now. Points count once a segment is finished. A tie splits the points.</p>`;
   } else if (ui.board === "ind") {
-    const data = rounds().map(r => ({ round: r, course: courseOf(r), scores: scoresOf(r.id) }));
-    const cols = data.flatMap(d => d.course ? segmentsOf(d.round).filter(seg => seg.format !== "scramble").map(seg => ({ key: d.round.id + ":" + seg.id, label: `R${d.round.order || ""} ${E.segLabel(seg)}` })) : []);
-    const rows = E.individualBoard(trip(), data);
+    h += boardBasisToggle();
+    const data = rounds();
+    const cols = data.flatMap(r => courseOf(r) ? segmentsOf(r).filter(seg => seg.format !== "scramble").map(seg => ({ key: r.id + ":" + seg.id, label: `R${r.order || ""} ${E.segLabel(seg)}`, holes: E.segmentHoles(courseOf(r), seg).length })) : []);
+    const rows = individualBoardFor(ui.boardBasis);
     h += `<section class="panel tw"><table><tr><th></th><th class="l">Player</th>${cols.map(c => `<th>${c.label}</th>`).join("")}<th>Total</th></tr>
-      ${rows.map((x, i) => `<tr><td class="rank">${i + 1}</td><td class="l">${sw(x.team)} <b>${esc(x.name)}</b> <span class="small muted">${esc(hcpText(trip().players[x.id]?.hcp))}</span></td>${cols.map(c => { const v = x.cols[c.key]; return `<td>${v ? v.pts + (v.thru < 9 ? ` <span class="small muted">(${v.thru})</span>` : "") : "–"}</td>`; }).join("")}<td class="tot">${x.total}</td></tr>`).join("")}</table></section>
-      <p class="note">Individual Stableford order of merit. Scramble segments are left out. Brackets show holes played when a segment isn't finished.</p>`;
+      ${rows.map((x, i) => `<tr><td class="rank">${x.any ? i + 1 : ""}</td><td class="l">${sw(x.team)} <b>${esc(x.name)}</b> <span class="small muted">${esc(hcpText(trip().players[x.id]?.hcp))}</span></td>${cols.map(c => { const v = x.cols[c.key]; return `<td>${v ? v.text + (v.thru < c.holes ? ` <span class="small muted">(${v.thru})</span>` : "") : "–"}</td>`; }).join("")}<td class="tot">${x.any ? x.total : "–"}</td></tr>`).join("")}</table></section>
+      <p class="note">${ui.boardBasis === "stableford" ? "Individual Stableford order of merit, best first." : ui.boardBasis === "net" ? "Individual net strokes, lowest first." : "Individual gross strokes, lowest first."} Scramble segments are left out. Brackets show holes played when a segment isn't finished.</p>`;
   } else if (ui.board === "cards") {
     const rs = rounds(); const r = trip().rounds[ui.cardsRound] || currentRound();
     h += `<div class="seg">${rs.map(x => `<button data-act="cardsRound" data-id="${x.id}" aria-pressed="${x.id === r.id}">${esc(x.label)}</button>`).join("")}</div>`;
+    h += boardBasisToggle();
     const c = courseOf(r);
     if (c) for (const seg of segmentsOf(r)) {
       const holes = E.segmentHoles(c, seg);
       const g = { playerIds: E.roundPlayers(r) };
       const rws = scoreRows(r, g, seg);
-      h += `<h2>${esc(E.segLabel(seg))} · ${esc(E.FORMATS[seg.format || "tbc"].short)}</h2><section class="panel tw"><table><tr><th class="l">Hole</th>${holes.map(x => `<th>${x}</th>`).join("")}<th>Tot</th><th>${seg.format === "scramble" ? "Net" : "Pts"}</th></tr>
-        <tr class="par"><td class="l">Par</td>${holes.map(x => `<td>${E.parOf(c, r, x)}</td>`).join("")}<td>${holes.reduce((a, x) => a + E.parOf(c, r, x), 0)}</td><td></td></tr>
-        ${rws.map(rw => { let tot = 0, pts = 0, net = 0; const cells = holes.map(x => { const v = E.val(scoresOf(r.id), rw.key, x), par = E.parOf(c, r, x), sh = rw.shots(x); if (typeof v === "number") { tot += v; net += v - sh - par; } const p = E.stablefordPts(v, par, sh); if (p != null) pts += p; return `<td class="${typeof v === "number" && v < par ? "u" : ""}">${E.has(v) ? v : "·"}${sh > 0 ? `<sup class="muted">${"•".repeat(sh)}</sup>` : ""}</td>`; }).join("");
-          return `<tr><td class="l">${sw(rw.teamId)} <b>${esc(rw.name)}</b></td>${cells}<td><b>${tot || "–"}</b></td><td class="tot">${seg.format === "scramble" ? E.toPar(net) : pts}</td></tr>`; }).join("")}</table></section>`;
+      const basis = seg.format === "scramble" ? "net" : ui.boardBasis;
+      const totLabel = basis === "gross" ? "Gross" : basis === "net" ? "Net" : "Pts";
+      h += `<h2>${esc(E.segLabel(seg))} · ${esc(E.FORMATS[seg.format || "tbc"].short)}</h2><section class="panel tw"><table><tr><th class="l">Hole</th>${holes.map(x => `<th>${x}</th>`).join("")}<th>${totLabel}</th></tr>
+        <tr class="par"><td class="l">Par</td>${holes.map(x => `<td>${E.parOf(c, r, x)}</td>`).join("")}<td>${holes.reduce((a, x) => a + E.parOf(c, r, x), 0)}</td></tr>
+        ${rws.map(rw => {
+          let tot = 0, any = false;
+          const cells = holes.map(x => {
+            const v = E.val(scoresOf(r.id), rw.key, x), par = E.parOf(c, r, x), sh = rw.shots(x);
+            if (E.has(v)) {
+              any = true;
+              if (basis === "gross" && typeof v === "number") tot += v;
+              else if (basis === "net" && typeof v === "number") tot += v - sh;
+              else if (basis === "stableford") { const p = E.stablefordPts(v, par, sh); if (p != null) tot += p; }
+            }
+            return `<td class="${typeof v === "number" && v < par ? "u" : ""}">${cellForBasis(v, par, sh, basis)}${sh > 0 ? `<sup class="muted">${"•".repeat(sh)}</sup>` : ""}</td>`;
+          }).join("");
+          return `<tr><td class="l">${sw(rw.teamId)} <b>${esc(rw.name)}</b></td>${cells}<td class="tot">${any ? tot : "–"}</td></tr>`;
+        }).join("")}</table></section>`;
     }
   } else {
     h += betsView();
@@ -589,6 +649,7 @@ view.addEventListener("click", async e => {
     }
     case "board": ui.board = b.dataset.id; break;
     case "cardsRound": ui.cardsRound = b.dataset.id; break;
+    case "boardBasis": ui.boardBasis = b.dataset.id; lsSet("boardBasis", ui.boardBasis); break;
     case "betAdd": {
       const rid = b.dataset.id; const t = structuredClone(trip());
       t.bets = t.bets || []; t.bets.push({ id: "b" + Date.now(), roundId: rid, type: $(`#bt-${rid}`).value, hole: $(`#bh-${rid}`).value, winner: $(`#bw-${rid}`).value, note: $(`#bn-${rid}`).value.trim() });
