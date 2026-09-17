@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Anyone who opens the app signs in anonymously and can read and write trip data.
+    match /trips/{tripId}/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

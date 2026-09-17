@@ -1,0 +1,497 @@
+{
+  "id": "aa-saint-omer",
+  "name": "Aa Saint-Omer Golf Club",
+  "country": "France",
+  "address": "Chemin des Bois, Acquin-Westbécourt, 62380 Lumbres",
+  "phone": "+33 3 21 38 59 90",
+  "website": "https://www.st-omer.najeti.fr",
+  "courses": [
+    {
+      "id": "le-val",
+      "name": "Le Val",
+      "holesCount": 18,
+      "par": 73,
+      "status": "partial",
+      "missing": [
+        "Hole-by-hole distances for Blanc, Jaune, Bleu, Rouge",
+        "Hole names",
+        "Hole graphics",
+        "Confirm SI against official card"
+      ],
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "strokeIndex": 3,
+          "image": null
+        },
+        {
+          "number": 2,
+          "par": 3,
+          "strokeIndex": 11,
+          "image": null
+        },
+        {
+          "number": 3,
+          "par": 4,
+          "strokeIndex": 1,
+          "image": null
+        },
+        {
+          "number": 4,
+          "par": 3,
+          "strokeIndex": 15,
+          "image": null
+        },
+        {
+          "number": 5,
+          "par": 4,
+          "strokeIndex": 17,
+          "image": null
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "strokeIndex": 13,
+          "image": null
+        },
+        {
+          "number": 7,
+          "par": 5,
+          "strokeIndex": 7,
+          "image": null
+        },
+        {
+          "number": 8,
+          "par": 4,
+          "strokeIndex": 9,
+          "image": null
+        },
+        {
+          "number": 9,
+          "par": 5,
+          "strokeIndex": 5,
+          "image": null
+        },
+        {
+          "number": 10,
+          "par": 4,
+          "strokeIndex": 16,
+          "image": null
+        },
+        {
+          "number": 11,
+          "par": 3,
+          "strokeIndex": 18,
+          "image": null
+        },
+        {
+          "number": 12,
+          "par": 4,
+          "strokeIndex": 4,
+          "image": null
+        },
+        {
+          "number": 13,
+          "par": 4,
+          "strokeIndex": 2,
+          "image": null
+        },
+        {
+          "number": 14,
+          "par": 5,
+          "strokeIndex": 12,
+          "image": null
+        },
+        {
+          "number": 15,
+          "par": 5,
+          "strokeIndex": 14,
+          "image": null
+        },
+        {
+          "number": 16,
+          "par": 4,
+          "strokeIndex": 10,
+          "image": null
+        },
+        {
+          "number": 17,
+          "par": 3,
+          "strokeIndex": 8,
+          "image": null
+        },
+        {
+          "number": 18,
+          "par": 5,
+          "strokeIndex": 6,
+          "image": null
+        }
+      ],
+      "tees": [
+        {
+          "id": "noir",
+          "name": "Noir",
+          "nameEn": "Black",
+          "colour": "#111111",
+          "ratings": {
+            "men": {
+              "sss": 74.9,
+              "slope": 139
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": [
+                358,
+                194,
+                390,
+                150,
+                298,
+                364,
+                521,
+                357,
+                465,
+                380,
+                178,
+                340,
+                401,
+                482,
+                430,
+                375,
+                168,
+                475
+              ],
+              "total": 6326
+            },
+            "yd": {
+              "holes": [
+                392,
+                212,
+                427,
+                164,
+                326,
+                398,
+                570,
+                390,
+                509,
+                416,
+                195,
+                372,
+                439,
+                527,
+                470,
+                410,
+                184,
+                519
+              ],
+              "total": 6920,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "blanc",
+          "name": "Blanc",
+          "nameEn": "White",
+          "colour": "#FFFFFF",
+          "ratings": {
+            "men": {
+              "sss": 74.1,
+              "slope": 142
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 6200
+            },
+            "yd": {
+              "holes": null,
+              "total": 6780,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "jaune",
+          "name": "Jaune",
+          "nameEn": "Yellow",
+          "colour": "#FFE600",
+          "ratings": {
+            "men": {
+              "sss": 71.8,
+              "slope": 144
+            },
+            "women": {
+              "sss": 78.1,
+              "slope": 142
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 5817
+            },
+            "yd": {
+              "holes": null,
+              "total": 6362,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "bleu",
+          "name": "Bleu",
+          "nameEn": "Blue",
+          "colour": "#1EB4E6",
+          "ratings": {
+            "men": {
+              "sss": 69.1,
+              "slope": 138
+            },
+            "women": {
+              "sss": 74.8,
+              "slope": 135
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 5276
+            },
+            "yd": {
+              "holes": null,
+              "total": 5770,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "rouge",
+          "name": "Rouge",
+          "nameEn": "Red",
+          "colour": "#E30613",
+          "ratings": {
+            "men": {
+              "sss": 67.9,
+              "slope": 136
+            },
+            "women": {
+              "sss": 73.3,
+              "slope": 134
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 5027
+            },
+            "yd": {
+              "holes": null,
+              "total": 5498,
+              "converted": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "haute-dreve",
+      "name": "La Haute Drève",
+      "holesCount": 9,
+      "par": 31,
+      "status": "partial",
+      "missing": [
+        "Par and stroke index for each hole",
+        "Hole-by-hole distances",
+        "Hole graphics"
+      ],
+      "holes": [
+        {
+          "number": 1,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 2,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 3,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 4,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 5,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 6,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 7,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 8,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        },
+        {
+          "number": 9,
+          "par": null,
+          "strokeIndex": null,
+          "image": null
+        }
+      ],
+      "tees": [
+        {
+          "id": "long",
+          "name": "Noir / Blanc / Jaune",
+          "nameEn": "Back tees",
+          "colour": "#FFE600",
+          "ratings": {
+            "men": {
+              "sss": 62.3,
+              "slope": 110
+            },
+            "women": {
+              "sss": 66.0,
+              "slope": 114
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 2018
+            },
+            "yd": {
+              "holes": null,
+              "total": 2207,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "short",
+          "name": "Bleu / Rouge",
+          "nameEn": "Forward tees",
+          "colour": "#E30613",
+          "ratings": {
+            "men": {
+              "sss": 60.4,
+              "slope": 106
+            },
+            "women": {
+              "sss": 62.6,
+              "slope": 107
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 1707
+            },
+            "yd": {
+              "holes": null,
+              "total": 1867,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "violet",
+          "name": "Violet",
+          "nameEn": "Purple",
+          "colour": "#7B3FA0",
+          "ratings": {
+            "men": {
+              "sss": 56.3,
+              "slope": 103
+            },
+            "women": {
+              "sss": 58.0,
+              "slope": 104
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 1341
+            },
+            "yd": {
+              "holes": null,
+              "total": 1467,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "orange",
+          "name": "Orange",
+          "nameEn": "Orange",
+          "colour": "#F39200",
+          "ratings": {
+            "men": {
+              "sss": 54.0,
+              "slope": 113
+            },
+            "women": {
+              "sss": 54.0,
+              "slope": 113
+            }
+          },
+          "source": "ffgolf",
+          "sourceUnit": "m",
+          "lengths": {
+            "m": {
+              "holes": null,
+              "total": 1220
+            },
+            "yd": {
+              "holes": null,
+              "total": 1334,
+              "converted": true
+            }
+          }
+        }
+      ],
+      "note": "Ratings published are for 18 holes (par 62, two loops of the 9)"
+    }
+  ]
+}

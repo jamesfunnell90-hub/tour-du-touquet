@@ -1,0 +1,467 @@
+{
+  "id": "aldenham",
+  "name": "Aldenham Golf & Country Club",
+  "country": "England",
+  "phone": "01923 853929",
+  "website": "https://www.aldenhamgolfclub.co.uk",
+  "courses": [
+    {
+      "id": "church",
+      "name": "Church Course",
+      "holesCount": 18,
+      "par": 70,
+      "status": "complete-men",
+      "missing": [
+        "Ladies par and stroke index (red tee is par 71 for ladies, holes not confirmed)",
+        "Hole graphics",
+        "Confirm against club scorecard"
+      ],
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "strokeIndex": 4,
+          "image": null
+        },
+        {
+          "number": 2,
+          "par": 4,
+          "strokeIndex": 18,
+          "image": null
+        },
+        {
+          "number": 3,
+          "par": 4,
+          "strokeIndex": 10,
+          "image": null
+        },
+        {
+          "number": 4,
+          "par": 4,
+          "strokeIndex": 2,
+          "image": null
+        },
+        {
+          "number": 5,
+          "par": 5,
+          "strokeIndex": 16,
+          "image": null
+        },
+        {
+          "number": 6,
+          "par": 3,
+          "strokeIndex": 12,
+          "image": null
+        },
+        {
+          "number": 7,
+          "par": 4,
+          "strokeIndex": 6,
+          "image": null
+        },
+        {
+          "number": 8,
+          "par": 3,
+          "strokeIndex": 14,
+          "image": null
+        },
+        {
+          "number": 9,
+          "par": 5,
+          "strokeIndex": 8,
+          "image": null
+        },
+        {
+          "number": 10,
+          "par": 4,
+          "strokeIndex": 3,
+          "image": null
+        },
+        {
+          "number": 11,
+          "par": 4,
+          "strokeIndex": 5,
+          "image": null
+        },
+        {
+          "number": 12,
+          "par": 3,
+          "strokeIndex": 13,
+          "image": null
+        },
+        {
+          "number": 13,
+          "par": 5,
+          "strokeIndex": 1,
+          "image": null
+        },
+        {
+          "number": 14,
+          "par": 3,
+          "strokeIndex": 17,
+          "image": null
+        },
+        {
+          "number": 15,
+          "par": 4,
+          "strokeIndex": 9,
+          "image": null
+        },
+        {
+          "number": 16,
+          "par": 4,
+          "strokeIndex": 15,
+          "image": null
+        },
+        {
+          "number": 17,
+          "par": 3,
+          "strokeIndex": 7,
+          "image": null
+        },
+        {
+          "number": 18,
+          "par": 4,
+          "strokeIndex": 11,
+          "image": null
+        }
+      ],
+      "tees": [
+        {
+          "id": "white",
+          "name": "White",
+          "colour": "#FFFFFF",
+          "sourceUnit": "yd",
+          "ratings": {
+            "men": {
+              "courseRating": 70.9,
+              "slope": 122
+            }
+          },
+          "lengths": {
+            "yd": {
+              "holes": [
+                426,
+                329,
+                337,
+                422,
+                478,
+                189,
+                418,
+                182,
+                548,
+                440,
+                407,
+                180,
+                621,
+                154,
+                364,
+                330,
+                230,
+                354
+              ],
+              "total": 6409
+            },
+            "m": {
+              "holes": [
+                390,
+                301,
+                308,
+                386,
+                437,
+                173,
+                382,
+                166,
+                501,
+                402,
+                372,
+                165,
+                568,
+                141,
+                333,
+                302,
+                210,
+                324
+              ],
+              "total": 5861,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "yellow",
+          "name": "Yellow",
+          "colour": "#FFE600",
+          "sourceUnit": "yd",
+          "ratings": {
+            "men": {
+              "courseRating": 69.2,
+              "slope": 118
+            }
+          },
+          "lengths": {
+            "yd": {
+              "holes": [
+                408,
+                337,
+                312,
+                399,
+                467,
+                173,
+                398,
+                167,
+                537,
+                428,
+                377,
+                172,
+                594,
+                138,
+                354,
+                314,
+                192,
+                325
+              ],
+              "total": 6092
+            },
+            "m": {
+              "holes": [
+                373,
+                308,
+                285,
+                365,
+                427,
+                158,
+                364,
+                153,
+                491,
+                391,
+                345,
+                157,
+                543,
+                126,
+                324,
+                287,
+                176,
+                297
+              ],
+              "total": 5570,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "red",
+          "name": "Red",
+          "colour": "#E30613",
+          "sourceUnit": "yd",
+          "ratings": {
+            "women": {
+              "courseRating": 71.9,
+              "slope": 123,
+              "par": 71
+            }
+          },
+          "lengths": {
+            "yd": {
+              "holes": [
+                387,
+                312,
+                293,
+                381,
+                441,
+                157,
+                388,
+                112,
+                415,
+                415,
+                361,
+                160,
+                509,
+                107,
+                340,
+                293,
+                175,
+                300
+              ],
+              "total": 5546
+            },
+            "m": {
+              "holes": [
+                354,
+                285,
+                268,
+                348,
+                403,
+                144,
+                355,
+                102,
+                379,
+                379,
+                330,
+                146,
+                465,
+                98,
+                311,
+                268,
+                160,
+                274
+              ],
+              "total": 5069,
+              "converted": true
+            }
+          },
+          "note": "Ladies par 71; men's par and SI shown"
+        }
+      ]
+    },
+    {
+      "id": "village",
+      "name": "Village Course",
+      "aliases": [
+        "Berry Grove"
+      ],
+      "holesCount": 9,
+      "par": 33,
+      "status": "partial",
+      "missing": [
+        "Course ratings/slope",
+        "Confirm layout is current"
+      ],
+      "holes": [
+        {
+          "number": 1,
+          "par": 4,
+          "strokeIndex": 7,
+          "image": null
+        },
+        {
+          "number": 2,
+          "par": 4,
+          "strokeIndex": 3,
+          "image": null
+        },
+        {
+          "number": 3,
+          "par": 3,
+          "strokeIndex": 6,
+          "image": null
+        },
+        {
+          "number": 4,
+          "par": 4,
+          "strokeIndex": 8,
+          "image": null
+        },
+        {
+          "number": 5,
+          "par": 3,
+          "strokeIndex": 2,
+          "image": null
+        },
+        {
+          "number": 6,
+          "par": 4,
+          "strokeIndex": 5,
+          "image": null
+        },
+        {
+          "number": 7,
+          "par": 3,
+          "strokeIndex": 9,
+          "image": null
+        },
+        {
+          "number": 8,
+          "par": 4,
+          "strokeIndex": 4,
+          "image": null
+        },
+        {
+          "number": 9,
+          "par": 4,
+          "strokeIndex": 1,
+          "image": null
+        }
+      ],
+      "strokeIndexScale": 9,
+      "tees": [
+        {
+          "id": "white",
+          "name": "White/Yellow",
+          "colour": "#FFE600",
+          "sourceUnit": "yd",
+          "ratings": {},
+          "lengths": {
+            "yd": {
+              "holes": [
+                338,
+                324,
+                125,
+                299,
+                210,
+                272,
+                112,
+                312,
+                357
+              ],
+              "total": 2349
+            },
+            "m": {
+              "holes": [
+                309,
+                296,
+                114,
+                273,
+                192,
+                249,
+                102,
+                285,
+                326
+              ],
+              "total": 2146,
+              "converted": true
+            }
+          }
+        },
+        {
+          "id": "red",
+          "name": "Red",
+          "colour": "#E30613",
+          "sourceUnit": "yd",
+          "ratings": {},
+          "lengths": {
+            "yd": {
+              "holes": [
+                322,
+                306,
+                112,
+                282,
+                202,
+                268,
+                101,
+                308,
+                299
+              ],
+              "total": 2200
+            },
+            "m": {
+              "holes": [
+                294,
+                280,
+                102,
+                258,
+                185,
+                245,
+                92,
+                282,
+                273
+              ],
+              "total": 2011,
+              "converted": true
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

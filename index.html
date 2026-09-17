@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1E5A3E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tour du Touquet">
+<title>Tour du Touquet</title>
+<link rel="icon" href="assets/tour-badge.png">
+<link rel="apple-touch-icon" href="assets/tour-badge.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light dark;
+  --ground:#F2F5F0; --surface:#FFFFFF; --sunk:#E8EEE7; --ink:#14261F; --muted:#5A6A62; --line:#D6DFD6;
+  --fairway:#1E5A3E; --fairway-ink:#FFFFFF; --flag:#D9A72C; --under:#C9302A; --dot:#1E5A3E; --warn:#9A5B00; --warn-bg:#FFF3DC;
+  --sketch:#5E7C8E; --tri-blue:#2A4B8D; --tri-red:#C8373B;
+  --c-blue:#2F5DA8; --c-claret:#8E2C48; --c-green:#2E7D4F; --c-gold:#A77A0B; --c-orange:#C2561B; --c-purple:#6B3FA0; --c-teal:#1D7B80; --c-black:#222;
+  --serif:"Cormorant Garamond","Iowan Old Style",Georgia,serif;
+  --display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ground:#0D1512; --surface:#15201B; --sunk:#1B2923; --ink:#E3ECE6; --muted:#93A39A; --line:#27352F;
+    --fairway:#3E9A6C; --fairway-ink:#06110C; --flag:#E6C05A; --under:#FF6F62; --dot:#6CC596; --warn:#F2B75B; --warn-bg:#2B2210;
+    --sketch:#8FA9B8; --tri-blue:#8EA8E0; --tri-red:#FF7A72;
+    --c-blue:#86A9EC; --c-claret:#E08AA2; --c-green:#6CC596; --c-gold:#E6C05A; --c-orange:#F29A63; --c-purple:#B99AE8; --c-teal:#6CCBD0; --c-black:#D0D0D0;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.4;-webkit-text-size-adjust:100%;padding-top:env(safe-area-inset-top,0px)}
+button,input,select{font:inherit;color:inherit}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--flag);outline-offset:2px}
+[hidden]{display:none!important}
+.app{max-width:520px;margin:0 auto;min-height:100%;padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+.num{font-family:var(--display);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:13px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--fairway);color:var(--fairway-ink);padding:10px 16px 12px;display:flex;flex-direction:column;gap:6px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.brandrow{display:flex;align-items:center;gap:10px;min-width:0}
+.badge{width:46px;height:46px;flex:none;border-radius:50%;background:#F7F1EB;display:grid;place-items:center;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
+.badge img{width:40px;height:40px;object-fit:contain}
+.brand{font-family:var(--serif);font-weight:700;font-size:23px;letter-spacing:.03em;line-height:1}
+.brand small{display:block;font-family:var(--body);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.8;margin-top:3px}
+.ctx{font-size:13px;opacity:.9}
+.pill{font-size:11px;letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;border-radius:4px;padding:1px 6px;white-space:nowrap;opacity:.9}
+
+main{padding:16px;display:flex;flex-direction:column;gap:14px}
+h2{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}
+h3{margin:0;font-size:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.pad{padding:14px}
+.note{font-size:13px;color:var(--muted);margin:0 2px}
+.banner{border-radius:8px;padding:9px 12px;font-size:13px;background:var(--warn-bg);color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 30%,transparent)}
+.banner.ok{background:var(--sunk);color:var(--muted);border-color:var(--line)}
+
+.hero{overflow:hidden}
+.motto{padding:14px 8px 0;text-align:center;font-family:var(--serif);font-weight:700;font-size:clamp(15px,4.6vw,22px);letter-spacing:.08em;color:var(--tri-blue);white-space:nowrap}
+.motto i{font-style:normal;color:var(--tri-red);margin:0 .35em}
+.art{display:block;width:100%;aspect-ratio:900/188;background:var(--sketch);-webkit-mask:url(assets/tour-sketch-mask.png) center/100% 100% no-repeat;mask:url(assets/tour-sketch-mask.png) center/100% 100% no-repeat}
+.footart{border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--surface);margin-top:6px}
+.footart .motto{font-size:15px;padding-top:10px}
+
+.cup{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px 14px 10px;gap:8px}
+.cup .team{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cup .team.r{text-align:right}
+.cup .tname{font-weight:700;font-size:14px}
+.cup .pts{font-family:var(--display);font-weight:700;font-size:54px;line-height:1}
+.cup .mid{text-align:center;color:var(--muted);font-size:12px;line-height:1.2}
+.cup .mid b{display:block;font-family:var(--display);font-size:18px;color:var(--ink)}
+.bar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden;display:flex;margin:0 14px 14px}
+.bar i{display:block;height:100%}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--sunk);color:var(--muted);white-space:nowrap}
+.chip.live{background:var(--fairway);color:var(--fairway-ink)}
+.chip.final{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none;vertical-align:baseline}
+
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.card-head .title{font-weight:700}
+.card-head .sub{font-size:13px;color:var(--muted)}
+.body{padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.big{font-family:var(--display);font-weight:700;font-size:26px;line-height:1.05}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;padding:0 14px 14px}
+.gcard{background:var(--sunk);border-radius:8px;padding:8px 10px;font-size:13px}
+.gcard b{font-family:var(--display);font-size:17px}
+
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:transparent;padding:8px 6px;border-radius:6px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;min-width:0}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.strip{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.strip button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 0;font-family:var(--display);font-weight:600;font-size:16px;cursor:pointer}
+.strip button.done{background:var(--sunk);color:var(--muted)}
+.strip button.cur{background:var(--flag);border-color:var(--flag);color:#1b1500}
+.hole{display:grid;grid-template-columns:104px 1fr;gap:14px;padding:14px}
+.hole img,.hole .noimg{width:104px;height:152px;object-fit:cover;object-position:top;border-radius:6px;background:var(--sunk)}
+.hole .noimg{display:grid;place-items:center;color:var(--muted);font-size:12px;text-align:center;padding:8px}
+.hno{font-family:var(--display);font-weight:700;font-size:44px;line-height:.9}
+.hname{font-weight:700;font-size:17px;margin-top:2px}
+.facts{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:4px 18px;margin-top:10px}
+.facts span{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.facts b{font-family:var(--display);font-size:24px;font-weight:600;display:block;line-height:1}
+.unit{border:1px solid var(--line);background:transparent;border-radius:4px;font-size:11px;padding:0 4px;margin-left:2px;cursor:pointer;color:var(--muted)}
+.prow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:12px 14px;border-top:1px solid var(--line)}
+.pname{font-weight:700;display:flex;align-items:center;gap:6px}
+.pmeta{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px;flex-wrap:wrap}
+.dots{letter-spacing:1px;color:var(--dot);font-size:14px}
+.step{display:flex;align-items:center;gap:6px}
+.step button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:24px;font-weight:600;cursor:pointer;line-height:1;touch-action:manipulation}
+.step .pu{width:36px;height:36px;border-radius:8px;font-size:13px;font-weight:700;color:var(--muted)}
+.step .pu[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+.val{width:40px;text-align:center;font-family:var(--display);font-weight:700;font-size:34px;line-height:1}
+.val.ghost{color:var(--muted);opacity:.45}
+.val.u{color:var(--under)}
+.ptsTag{font-family:var(--display);font-size:15px;font-weight:600;color:var(--fairway)}
+.countTag{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--fairway);border:1px solid var(--fairway);border-radius:4px;padding:1px 4px;vertical-align:middle}
+.prow.faded{opacity:.5}
+.squares{display:flex;flex-wrap:wrap;gap:4px}
+.hsq{width:26px;height:26px;border-radius:6px;display:grid;place-items:center;font-family:var(--display);font-size:12px;font-weight:700;background:var(--sunk);color:var(--muted);border:1px solid var(--line)}
+.hsq.half{background:transparent;border:2px dashed var(--muted);color:var(--muted)}
+.nav{display:flex;gap:10px}
+.btn{padding:11px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:700;cursor:pointer;text-align:center}
+.btn.primary{background:var(--fairway);color:var(--fairway-ink);border-color:var(--fairway)}
+.btn.danger{color:var(--under)}
+.btn.sm{padding:6px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:default}
+.nav .btn{flex:1}
+.matchbar{padding:10px 14px;background:var(--sunk);border-radius:0 0 10px 10px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td.l,th.l{text-align:left;padding-left:14px}
+td.u{color:var(--under);font-weight:700}
+tr.par td{color:var(--muted);font-size:12px}
+.rank{font-family:var(--display);font-size:20px;font-weight:700;width:30px}
+.tot{font-family:var(--display);font-size:22px;font-weight:700}
+.cell{width:40px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:6px 2px;background:var(--surface);font-family:var(--display);font-size:18px}
+
+.list{display:flex;flex-direction:column}
+.item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 14px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;width:100%;cursor:pointer}
+.item:first-child{border-top:0}
+.item .sub{font-size:13px;color:var(--muted)}
+.go{color:var(--muted);font-size:20px}
+.form{display:flex;flex-direction:column}
+.field{display:flex;flex-direction:column;gap:4px;padding:10px 14px;border-top:1px solid var(--line)}
+.form>.field:first-child{border-top:0}
+.field label,.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.field input,.field select,.in{padding:9px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row3{display:grid;grid-template-columns:2fr 1fr 1.4fr auto;gap:6px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chipbtn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.chipbtn[aria-pressed="true"]{background:var(--fairway);border-color:var(--fairway);color:var(--fairway-ink)}
+.chipbtn.taken{opacity:.45}
+.check{display:flex;gap:8px;align-items:center;font-weight:600}
+.check input{width:20px;height:20px}
+.sub-panel{border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--ground)}
+.backbar{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.log{display:flex;flex-direction:column;gap:6px;font-size:13px}
+
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs .in{max-width:520px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tabs button{border:0;background:transparent;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--fairway)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:8px 14px;border-radius:8px;font-size:14px;font-weight:600;z-index:9;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+@media (prefers-reduced-motion:no-preference){.step button:active,.btn:active{transform:scale(.96)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="row">
+      <div class="brandrow"><span class="badge"><img src="assets/tour-badge.png" alt="Le Touquet MMXXVI badge"></span>
+        <div class="brand" id="brand">Tour du Touquet<small>Comité du Tour · MMXXVI</small></div></div>
+    </div>
+    <div class="row"><div class="ctx" id="ctx">Loading…</div><span class="pill" id="modePill" hidden></span></div>
+  </header>
+  <main id="view"><p class="note">Loading the Tour…</p></main>
+</div>
+<nav class="tabs" aria-label="Main">
+  <div class="in">
+    <button data-tab="live"><svg viewBox="0 0 24 24"><path d="M6 21V3l11 4-11 4"/></svg>Live</button>
+    <button data-tab="score"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Score</button>
+    <button data-tab="board"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Leaderboard</button>
+    <button data-tab="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</button>
+  </div>
+</nav>
+<div class="toast" id="toast" hidden></div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
