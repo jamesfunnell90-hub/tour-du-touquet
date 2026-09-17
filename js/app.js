@@ -13,7 +13,7 @@ const lsSet = (k, v) => { try { localStorage.setItem("tdt:ui:" + k, JSON.stringi
 
 let CLUBS = [];
 const ui = {
-  tab: lsGet("tab", "live"), roundId: null, groupIdx: lsGet("group", 0), segId: null, hole: {},
+  tab: lsGet("tab", "live"), groupIdx: lsGet("group", 0), segId: null, hole: {},
   mode: "hole", board: "cup", boardBasis: lsGet("boardBasis", "stableford"), cardsRound: null, more: null, draft: null, dirty: false,
   unit: lsGet("unit", null), scorer: lsGet("scorer", ""), pinOk: lsGet("pin:" + TRIP_ID, false),
   welcomed: lsGet("welcomed", false),
@@ -33,6 +33,7 @@ const unit = () => ui.unit || trip().unit || "m";
 const scoresOf = rid => S.state.scores[rid] || {};
 const ctxOf = r => ({ trip: trip(), course: courseOf(r), round: r, scores: scoresOf(r.id), players: trip().players });
 const dayLabel = d => { if (!d) return ""; const x = new Date(d + "T12:00:00"); return x.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); };
+const dayName = d => { if (!d) return ""; const x = new Date(d + "T12:00:00"); return x.toLocaleDateString("en-GB", { weekday: "long" }); };
 const hcpText = h => (h === null || h === undefined || h === "" ? "hcp not set" : "hcp " + h);
 const courseHcpText = (p, r, c) => (p.hcp === null || p.hcp === undefined || p.hcp === "" ? "hcp not set" : "hcp " + E.courseHandicap(p.hcp, c, r.teeId));
 const sortedGroups = r => [...(r.groups || [])].sort((a, b) => String(a.time || "99:99").localeCompare(String(b.time || "99:99")));
@@ -46,7 +47,7 @@ const sw = id => `<span class="sw" style="background:${tcol(id)}"></span>`;
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 1800); }
 function currentRound() {
   const rs = rounds(); if (!rs.length) return null;
-  return trip().rounds[ui.roundId] || trip().rounds[trip().currentRound] || rs[0];
+  return trip().rounds[trip().currentRound] || rs[0];
 }
 function segmentsOf(r) { return r.segments || []; }
 function basisLabel(b) { return b === "net" ? "Net" : b === "gross" ? "Gross" : "Stableford"; }
@@ -141,10 +142,30 @@ function myStatusCard(weekendRows) {
   }
   const rank = weekendRows.findIndex(x => x.id === id) + 1;
   const weekendPts = weekendRows.find(x => x.id === id)?.total ?? 0;
-  return `<section class="panel"><div class="card-head"><div><div class="title">${sw(p.team)} ${esc(p.name)}</div></div></div><div class="body">
-    <div class="srow"><span>Today</span><span><b class="num" style="font-size:18px">${todayPts} pts</b> <span class="muted">thru ${todayThru}</span></span></div>
-    <div class="srow"><span>Weekend</span><span><b class="num" style="font-size:18px">${weekendPts} pts</b>${rank ? ` <span class="muted">#${rank}</span>` : ""}</span></div>
-  </div></section>`;
+  return `<section class="panel"><div style="padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline">
+      <span style="font-family:var(--serif);font-weight:700;font-size:26px">${esc(p.name)}</span>
+      <span style="background:${tcol(p.team)};color:var(--fairway-ink);border-radius:999px;padding:5px 14px;font-size:14px;font-weight:700">${esc(tname(p.team))}</span>
+    </div>
+    <div style="padding:16px;display:flex;justify-content:space-between;align-items:flex-end">
+      <div>
+        <div class="num" style="font-weight:700;font-size:48px;line-height:1;color:var(--fairway)">${todayPts}<span style="font-size:18px;color:var(--muted);font-weight:600"> pts</span></div>
+        <div class="small muted" style="margin-top:4px">Today · thru ${todayThru}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="small muted" style="letter-spacing:.06em;text-transform:uppercase;font-weight:700">Weekend</div>
+        <div class="num" style="font-weight:700;font-size:22px;margin-top:2px">${weekendPts} pts</div>
+        ${rank ? `<div class="chip live" style="margin-top:6px;display:inline-block">Rank #${rank}</div>` : ""}
+      </div>
+    </div></section>`;
+}
+function cupPanel(cup, tm) {
+  if (tm.length !== 2) return `<section class="panel list">${tm.map(([id, T]) => `<div class="item" style="cursor:default"><b>${sw(id)} ${esc(T.name)}</b><span class="tot">${fmtPts(cup.tot[id])}</span></div>`).join("")}</section>`;
+  const [[a, A], [b, B]] = tm, sum = cup.tot[a] + cup.tot[b];
+  return `<section class="panel"><div class="cup">
+      <div class="team"><span class="tname" style="color:${tcol(a)}">${esc(A.name)}</span><span class="pts num" style="color:${tcol(a)}">${fmtPts(cup.tot[a])}</span></div>
+      <div class="mid">${cup.available ? `<b>${fmtPts(cup.played)} of ${fmtPts(cup.available)}</b>points decided` : `<b>Formats</b>to be agreed`}</div>
+      <div class="team r"><span class="tname" style="color:${tcol(b)}">${esc(B.name)}</span><span class="pts num" style="color:${tcol(b)}">${fmtPts(cup.tot[b])}</span></div></div>
+      <div class="bar" aria-hidden="true"><i style="width:${sum ? (cup.tot[a] / Math.max(cup.available, sum)) * 100 : 0}%;background:${tcol(a)}"></i><i style="flex:1"></i><i style="width:${sum ? (cup.tot[b] / Math.max(cup.available, sum)) * 100 : 0}%;background:${tcol(b)}"></i></div></section>`;
 }
 function vLive() {
   const t = trip(), res = allResults();
@@ -152,16 +173,7 @@ function vLive() {
   const tm = teams();
   const weekendRows = E.individualBoard(t, rounds().map(rr => ({ round: rr, course: courseOf(rr), scores: scoresOf(rr.id) })));
   let h = `<section class="panel hero">${MOTTO}<div class="art"></div></section>`;
-  if (tm.length === 2) {
-    const [[a, A], [b, B]] = tm, sum = cup.tot[a] + cup.tot[b];
-    h += `<section class="panel"><div class="cup">
-      <div class="team"><span class="tname" style="color:${tcol(a)}">${esc(A.name)}</span><span class="pts num" style="color:${tcol(a)}">${fmtPts(cup.tot[a])}</span></div>
-      <div class="mid">${cup.available ? `<b>${fmtPts(cup.played)} of ${fmtPts(cup.available)}</b>points decided` : `<b>Formats</b>to be agreed`}</div>
-      <div class="team r"><span class="tname" style="color:${tcol(b)}">${esc(B.name)}</span><span class="pts num" style="color:${tcol(b)}">${fmtPts(cup.tot[b])}</span></div></div>
-      <div class="bar" aria-hidden="true"><i style="width:${sum ? (cup.tot[a] / Math.max(cup.available, sum)) * 100 : 0}%;background:${tcol(a)}"></i><i style="flex:1"></i><i style="width:${sum ? (cup.tot[b] / Math.max(cup.available, sum)) * 100 : 0}%;background:${tcol(b)}"></i></div></section>`;
-  } else {
-    h += `<section class="panel list">${tm.map(([id, T]) => `<div class="item" style="cursor:default"><b>${sw(id)} ${esc(T.name)}</b><span class="tot">${fmtPts(cup.tot[id])}</span></div>`).join("")}</section>`;
-  }
+  h += cupPanel(cup, tm);
   h += myStatusCard(weekendRows);
   const r = trip().rounds[t.currentRound] || rounds()[0];
   if (r) {
@@ -238,7 +250,6 @@ function vScore() {
   if (!ui.segId || !segs.find(s => s.id === ui.segId)) ui.segId = segs[0]?.id;
   const seg = segs.find(s => s.id === ui.segId);
   let h = "";
-  if (rs.length > 1) h += `<div class="seg" role="group" aria-label="Round">${rs.map(x => `<button data-act="round" data-id="${x.id}" aria-pressed="${x.id === r.id}">${esc(x.label)}</button>`).join("")}</div>`;
   h += `<div class="seg" role="group" aria-label="Group">${groups.map((x, i) => `<button data-act="group" data-i="${i}" aria-pressed="${i === ui.groupIdx}">${esc(x.playerIds?.length ? groupLabel(r, x) : x.time || "Group " + (i + 1))}</button>`).join("")}</div>`;
   if (!g || !(g.playerIds || []).length) return h + `<div class="banner">No players in this group yet. Set the groups under More → Rounds.</div>`;
   if (!seg) return h + `<div class="banner">No segments set for this round.</div>`;
@@ -398,23 +409,25 @@ function cellForBasis(v, par, sh, basis) {
   return String(E.stablefordPts(v, par, sh) ?? "–");
 }
 function vBoard() {
-  const segs = [["cup", "Team cup"], ["ind", "Players"], ["cards", "Cards"], ["bets", "Side bets"]];
+  const segs = [["cup", "Team"], ["ind", "Individual"], ["cards", "Cards"], ["bets", "Side bets"]];
   let h = `<div class="seg" role="group" aria-label="Leaderboard">${segs.map(([k, l]) => `<button data-act="board" data-id="${k}" aria-pressed="${ui.board === k}">${l}</button>`).join("")}</div>`;
   const tm = teams();
   if (ui.board === "cup") {
     const res = allResults(); const cup = E.cupTotals(trip(), res.map(x => x.res));
-    h += `<section class="panel tw"><table><tr><th class="l">Segment</th><th>Format</th>${tm.map(([id, T]) => `<th style="color:${tcol(id)}">${esc(T.name)}</th>`).join("")}</tr>
-      ${res.map(({ r, res: x }) => `<tr><td class="l"><b>${esc(r.label)} ${esc(E.segLabel(x.seg))}</b><div class="small muted">${esc(courseOf(r)?.name || "")}</div></td><td class="small">${esc(E.FORMATS[x.fmt].short)}${x.status === "live" ? ' <span class="chip live">Live</span>' : ""}</td>
-        ${tm.map(([id]) => `<td class="${x.points ? "tot" : "small muted"}" style="${x.points ? `color:${tcol(id)}` : ""}">${x.points ? fmtPts(x.points[id]) : x.projected && x.status === "live" ? "(" + fmtPts(x.projected[id]) + ")" : "–"}</td>`).join("")}</tr>`).join("")}
-      <tr><td class="l"><b>Total</b></td><td></td>${tm.map(([id]) => `<td class="tot" style="font-size:30px;color:${tcol(id)}">${fmtPts(cup.tot[id])}</td>`).join("")}</tr></table></section>
+    h += cupPanel(cup, tm);
+    h += `<section class="panel tw"><table><tr><th class="l">Segment</th>${tm.map(([id, T]) => `<th style="color:${tcol(id)}">${esc(T.name)}</th>`).join("")}<th>Format</th></tr>
+      ${res.map(({ r, res: x }) => `<tr><td class="l" style="white-space:normal;max-width:140px"><b>${esc(dayName(r.date))}</b><div class="small muted">${esc(courseOf(r)?.name || "")} ${esc(E.segLabel(x.seg))}</div></td>
+        ${tm.map(([id]) => `<td class="${x.points ? "tot" : "small muted"}" style="${x.points ? `color:${tcol(id)}` : ""}">${x.points ? fmtPts(x.points[id]) : x.projected && x.status === "live" ? "(" + fmtPts(x.projected[id]) + ")" : "–"}</td>`).join("")}
+        <td class="small">${esc(E.FORMATS[x.fmt].short)}${x.status === "live" ? ' <span class="chip live">Live</span>' : ""}</td></tr>`).join("")}
+      <tr><td class="l"><b>Total</b></td>${tm.map(([id]) => `<td class="tot" style="font-size:30px;color:${tcol(id)}">${fmtPts(cup.tot[id])}</td>`).join("")}<td></td></tr></table></section>
       <p class="note">Brackets show how a live segment stands right now. Points count once a segment is finished. A tie splits the points.</p>`;
   } else if (ui.board === "ind") {
     h += boardBasisToggle();
     const data = rounds();
     const cols = data.flatMap(r => courseOf(r) ? segmentsOf(r).filter(seg => seg.format !== "scramble").map(seg => ({ key: r.id + ":" + seg.id, label: `R${r.order || ""} ${E.segLabel(seg)}`, holes: E.segmentHoles(courseOf(r), seg).length })) : []);
     const rows = individualBoardFor(ui.boardBasis);
-    h += `<section class="panel tw"><table><tr><th></th><th class="l">Player</th>${cols.map(c => `<th>${c.label}</th>`).join("")}<th>Total</th></tr>
-      ${rows.map((x, i) => `<tr><td class="rank">${x.any ? i + 1 : ""}</td><td class="l">${sw(x.team)} <b>${esc(x.name)}</b> <span class="small muted">${esc(hcpText(trip().players[x.id]?.hcp))}</span></td>${cols.map(c => { const v = x.cols[c.key]; return `<td>${v ? v.text + (v.thru < c.holes ? ` <span class="small muted">(${v.thru})</span>` : "") : "–"}</td>`; }).join("")}<td class="tot">${x.any ? x.total : "–"}</td></tr>`).join("")}</table></section>
+    h += `<section class="panel tw"><table><tr><th></th><th class="l">Player</th><th>Total</th>${cols.map(c => `<th>${c.label}</th>`).join("")}</tr>
+      ${rows.map((x, i) => `<tr><td class="rank">${x.any ? i + 1 : ""}</td><td class="l">${sw(x.team)} <b>${esc(x.name)}</b> <span class="small muted">${esc(hcpText(trip().players[x.id]?.hcp))}</span></td><td class="tot">${x.any ? x.total : "–"}</td>${cols.map(c => { const v = x.cols[c.key]; return `<td>${v ? v.text + (v.thru < c.holes ? ` <span class="small muted">(${v.thru})</span>` : "") : "–"}</td>`; }).join("")}</tr>`).join("")}</table></section>
       <p class="note">${ui.boardBasis === "stableford" ? "Individual Stableford order of merit, best first." : ui.boardBasis === "net" ? "Individual net strokes, lowest first." : "Individual gross strokes, lowest first."} Scramble segments are left out. Brackets show holes played when a segment isn't finished.</p>`;
   } else if (ui.board === "cards") {
     const rs = rounds(); const r = trip().rounds[ui.cardsRound] || currentRound();
@@ -663,7 +676,6 @@ view.addEventListener("click", async e => {
   const a = b.dataset.act, d = ui.draft;
   const r = currentRound();
   switch (a) {
-    case "round": ui.roundId = b.dataset.id; ui.groupIdx = 0; ui.segId = null; break;
     case "group": ui.groupIdx = +b.dataset.i; lsSet("group", ui.groupIdx); break;
     case "seg": {
       const segs = segmentsOf(r), curSeg = segs.find(s => s.id === ui.segId), hk = `${r.id}:${ui.groupIdx}:${ui.segId}`;
