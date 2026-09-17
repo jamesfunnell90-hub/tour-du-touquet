@@ -34,6 +34,7 @@ const ctxOf = r => ({ trip: trip(), course: courseOf(r), round: r, scores: score
 const dayLabel = d => { if (!d) return ""; const x = new Date(d + "T12:00:00"); return x.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" }); };
 const hcpText = h => (h === null || h === undefined || h === "" ? "hcp not set" : "hcp " + h);
 const courseHcpText = (p, r, c) => (p.hcp === null || p.hcp === undefined || p.hcp === "" ? "hcp not set" : "hcp " + E.courseHandicap(p.hcp, c, r.teeId));
+const sortedGroups = r => [...(r.groups || [])].sort((a, b) => String(a.time || "99:99").localeCompare(String(b.time || "99:99")));
 function groupLabel(r, g) {
   const ids = g.playerIds || [];
   const teamsInGroup = new Set(ids.map(id => trip().players[id]?.team).filter(Boolean));
@@ -124,7 +125,7 @@ function vLive() {
     else {
       for (const seg of segmentsOf(r)) h += segmentCard(r, seg);
       h += `<section class="panel"><div class="card-head"><div><div class="title">Groups</div><div class="sub">${esc(club(r.clubId).name)} · ${esc(teeOf(r)?.name || "")} tees</div></div></div>
-        <div class="groups" style="padding-top:12px">${(r.groups || []).map(g => groupCard(r, g)).join("")}</div></section>`;
+        <div class="groups" style="padding-top:12px">${sortedGroups(r).map(g => groupCard(r, g)).join("")}</div></section>`;
       const top = E.individualBoard(t, [{ round: r, course: c, scores: scoresOf(r.id) }]).filter(x => Object.keys(x.cols).length).slice(0, 3);
       if (top.length) h += `<section class="panel"><div class="card-head"><div class="title">Top Stableford today</div></div><div class="body">${top.map((x, i) => `<div class="srow"><span>${i + 1}. ${sw(x.team)} <b>${esc(x.name)}</b></span><span class="num" style="font-size:20px;font-weight:700">${x.total} pts</span></div>`).join("")}</div></section>`;
     }
@@ -182,7 +183,7 @@ function vScore() {
   const rs = rounds(); if (!rs.length) return `<p class="note">No rounds yet. Add one under More → Rounds.</p>`;
   const r = currentRound();
   const c = courseOf(r); if (!c) return `<div class="banner">This round's course is missing. Fix it under More → Rounds.</div>`;
-  const groups = r.groups || [];
+  const groups = sortedGroups(r);
   if (ui.groupIdx >= groups.length) ui.groupIdx = 0;
   const g = groups[ui.groupIdx];
   const segs = segmentsOf(r);
