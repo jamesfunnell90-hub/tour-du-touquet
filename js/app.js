@@ -100,11 +100,22 @@ const MOTTO = `<div class="motto">LIBERTÉ<i>•</i>ÉGALITÉ<i>•</i>GOLF</div
 // ---------- WELCOME ----------
 function vWelcome() {
   const t = trip();
-  const players = Object.entries(t.players || {}).sort((a, b) => (t.teams[a[1].team]?.order || 0) - (t.teams[b[1].team]?.order || 0) || a[1].name.localeCompare(b[1].name));
+  const tms = teams();
+  const playerCol = (tid, T) => {
+    const players = Object.entries(t.players || {}).filter(([, p]) => p.team === tid);
+    return `<div style="flex:1;min-width:0"><div style="font-weight:700;margin-bottom:8px;color:${tcol(tid)}">${esc(T.name)}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${players.map(([id, p]) => `<button class="chipbtn" data-act="welcomePick" data-id="${id}" style="width:100%;justify-content:center">${esc(p.name)}</button>`).join("")}</div></div>`;
+  };
+  const unteamed = Object.entries(t.players || {}).filter(([, p]) => !p.team);
   return `<section class="panel hero">${MOTTO}<div class="art"></div></section>
     <section class="panel pad" style="text-align:center;display:flex;flex-direction:column;gap:16px">
-      <div><b style="font-size:20px">Who are you?</b><div class="small muted" style="margin-top:4px">So scores and setup changes on this phone are attributed to you</div></div>
-      <div class="chips" style="justify-content:center">${players.map(([id, p]) => `<button class="chipbtn" data-act="welcomePick" data-id="${id}"><span class="sw" style="background:${tcol(p.team)}"></span>${esc(p.name)}</button>`).join("")}</div>
+      <div>
+        <b style="font-size:20px;display:block">Welcome to the Tour du Touquet</b>
+        <div class="small muted" style="margin-top:6px">Please select your name from the players below.</div>
+        <div class="small muted" style="margin-top:2px">So scores and setup changes on this phone are attributed to you.</div>
+      </div>
+      <div style="display:flex;gap:16px;text-align:left">${tms.map(([tid, T]) => playerCol(tid, T)).join("")}</div>
+      ${unteamed.length ? `<div style="display:flex;flex-direction:column;gap:8px">${unteamed.map(([id, p]) => `<button class="chipbtn" data-act="welcomePick" data-id="${id}">${esc(p.name)}</button>`).join("")}</div>` : ""}
       <button class="btn sm" data-act="welcomeSkip" style="align-self:center">I'm just watching</button>
     </section>`;
 }
@@ -115,10 +126,31 @@ function allResults() {
   for (const r of rounds()) { const c = courseOf(r); if (!c) continue; for (const seg of segmentsOf(r)) out.push({ r, res: E.segmentResult(ctxOf(r), seg) }); }
   return out;
 }
+function myStatusCard(weekendRows) {
+  const id = ui.scorer;
+  if (!id || !trip().players[id]) return "";
+  const p = trip().players[id];
+  const r = currentRound();
+  let todayPts = 0, todayThru = 0;
+  if (r) {
+    const c = courseOf(r);
+    if (c) {
+      const mine = E.individualBoard(trip(), [{ round: r, course: c, scores: scoresOf(r.id) }]).find(x => x.id === id);
+      if (mine) { todayPts = mine.total; todayThru = Object.values(mine.cols).reduce((a, v) => a + v.thru, 0); }
+    }
+  }
+  const rank = weekendRows.findIndex(x => x.id === id) + 1;
+  const weekendPts = weekendRows.find(x => x.id === id)?.total ?? 0;
+  return `<section class="panel"><div class="card-head"><div><div class="title">${sw(p.team)} ${esc(p.name)}</div></div></div><div class="body">
+    <div class="srow"><span>Today</span><span><b class="num" style="font-size:18px">${todayPts} pts</b> <span class="muted">thru ${todayThru}</span></span></div>
+    <div class="srow"><span>Weekend</span><span><b class="num" style="font-size:18px">${weekendPts} pts</b>${rank ? ` <span class="muted">#${rank}</span>` : ""}</span></div>
+  </div></section>`;
+}
 function vLive() {
   const t = trip(), res = allResults();
   const cup = E.cupTotals(t, res.map(x => x.res));
   const tm = teams();
+  const weekendRows = E.individualBoard(t, rounds().map(rr => ({ round: rr, course: courseOf(rr), scores: scoresOf(rr.id) })));
   let h = `<section class="panel hero">${MOTTO}<div class="art"></div></section>`;
   if (tm.length === 2) {
     const [[a, A], [b, B]] = tm, sum = cup.tot[a] + cup.tot[b];
@@ -130,6 +162,7 @@ function vLive() {
   } else {
     h += `<section class="panel list">${tm.map(([id, T]) => `<div class="item" style="cursor:default"><b>${sw(id)} ${esc(T.name)}</b><span class="tot">${fmtPts(cup.tot[id])}</span></div>`).join("")}</section>`;
   }
+  h += myStatusCard(weekendRows);
   const r = trip().rounds[t.currentRound] || rounds()[0];
   if (r) {
     const c = courseOf(r);
@@ -141,6 +174,8 @@ function vLive() {
         <div class="groups" style="padding-top:12px">${sortedGroups(r).map(g => groupCard(r, g)).join("")}</div></section>`;
       const top = E.individualBoard(t, [{ round: r, course: c, scores: scoresOf(r.id) }]).filter(x => Object.keys(x.cols).length).slice(0, 3);
       if (top.length) h += `<section class="panel"><div class="card-head"><div class="title">Top Stableford today</div></div><div class="body">${top.map((x, i) => `<div class="srow"><span>${i + 1}. ${sw(x.team)} <b>${esc(x.name)}</b></span><span class="num" style="font-size:20px;font-weight:700">${x.total} pts</span></div>`).join("")}</div></section>`;
+      const topWeekend = weekendRows.filter(x => Object.keys(x.cols).length).slice(0, 3);
+      if (topWeekend.length) h += `<section class="panel"><div class="card-head"><div class="title">Top Stableford this weekend</div></div><div class="body">${topWeekend.map((x, i) => `<div class="srow"><span>${i + 1}. ${sw(x.team)} <b>${esc(x.name)}</b></span><span class="num" style="font-size:20px;font-weight:700">${x.total} pts</span></div>`).join("")}</div></section>`;
     }
   }
   h += `<h2>Schedule</h2><section class="panel list">${rounds().map(x => {
