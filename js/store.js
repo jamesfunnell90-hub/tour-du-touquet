@@ -35,14 +35,27 @@ async function firebaseStore(tripId) {
   const tripRef = fs.doc(db, "trips", tripId);
   const scoreUnsubs = {};
 
+  // Right after a fresh anonymous sign-in, Firestore can briefly reject reads with
+  // permission-denied before the new auth token has propagated (seen on first-time /
+  // slower connections). Retry a few times with backoff before giving up and showing an error.
+  function withRetry(attach, onGiveUp, tries = 0) {
+    return attach(err => {
+      if (err.code === "permission-denied" && tries < 4) { setTimeout(() => withRetry(attach, onGiveUp, tries + 1), 700 * (tries + 1)); return; }
+      onGiveUp(err);
+    });
+  }
+
   function watchScores(roundIds) {
     for (const rid of roundIds) {
       if (scoreUnsubs[rid]) continue;
-      scoreUnsubs[rid] = fs.onSnapshot(fs.doc(db, "trips", tripId, "scores", rid), { includeMetadataChanges: true }, snap => {
-        state.scores[rid] = (snap.exists() && snap.data().s) || {};
-        state.pending = snap.metadata.hasPendingWrites;
-        emit();
-      }, err => { state.error = err.message; emit(); });
+      scoreUnsubs[rid] = withRetry(
+        onErr => fs.onSnapshot(fs.doc(db, "trips", tripId, "scores", rid), { includeMetadataChanges: true }, snap => {
+          state.scores[rid] = (snap.exists() && snap.data().s) || {};
+          state.pending = snap.metadata.hasPendingWrites;
+          emit();
+        }, onErr),
+        err => { state.error = err.message; emit(); }
+      );
     }
   }
 
@@ -50,16 +63,19 @@ async function firebaseStore(tripId) {
     mode: "live",
     watch(seedFn) {
       au.signInAnonymously(auth).then(() => {
-        fs.onSnapshot(tripRef, async snap => {
-          if (!snap.exists()) {
-            await fs.setDoc(tripRef, seedFn());
-            return;
-          }
-          state.trip = snap.data();
-          state.ready = true;
-          watchScores(Object.keys(state.trip.rounds || {}));
-          emit();
-        }, err => { state.error = "Could not load the trip: " + err.message; emit(); });
+        withRetry(
+          onErr => fs.onSnapshot(tripRef, async snap => {
+            if (!snap.exists()) {
+              await fs.setDoc(tripRef, seedFn());
+              return;
+            }
+            state.trip = snap.data();
+            state.ready = true;
+            watchScores(Object.keys(state.trip.rounds || {}));
+            emit();
+          }, onErr),
+          err => { state.error = "Could not load the trip: " + err.message; emit(); }
+        );
         const q = fs.query(fs.collection(db, "trips", tripId, "log"), fs.orderBy("at", "desc"), fs.limit(60));
         fs.onSnapshot(q, snap => { state.log = snap.docs.map(d => ({ ...d.data(), at: d.data().at?.toMillis?.() || Date.now() })); emit(); });
       }).catch(err => { state.error = "Sign-in failed. Check Anonymous sign-in is enabled in Firebase. (" + err.code + ")"; emit(); });

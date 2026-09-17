@@ -296,6 +296,13 @@ async function writeScore(rid, key, n, value) {
     S.addLog({ text: `${trip().rounds[rid]?.label || ""} hole ${n}: ${who} ${E.has(from) ? from : "–"} → ${E.has(to) ? to : "cleared"}`, by: ui.scorer ? pname(ui.scorer) : "Unknown phone" });
   }, 4000);
 }
+// Save par for anyone left untouched on hole n before navigating away from it, so leaving a
+// hole via the hole strip or a segment tab (not just the Next button) never skips a score.
+async function fillParForHole(r, seg, n) {
+  if (!trip().fillPar || n == null || !seg) return;
+  const c = courseOf(r), g = sortedGroups(r)[ui.groupIdx];
+  for (const rw of scoreRows(r, g, seg)) if (!E.has(E.val(scoresOf(r.id), rw.key, n))) await writeScore(r.id, rw.key, n, E.parOf(c, r, n));
+}
 
 // ---------- LEADERBOARD ----------
 function vBoard() {
@@ -550,13 +557,22 @@ view.addEventListener("click", async e => {
   switch (a) {
     case "round": ui.roundId = b.dataset.id; ui.groupIdx = 0; ui.segId = null; break;
     case "group": ui.groupIdx = +b.dataset.i; lsSet("group", ui.groupIdx); break;
-    case "seg": ui.segId = b.dataset.id; break;
+    case "seg": {
+      const segs = segmentsOf(r), curSeg = segs.find(s => s.id === ui.segId), hk = `${r.id}:${ui.groupIdx}:${ui.segId}`;
+      await fillParForHole(r, curSeg, ui.hole[hk]);
+      ui.segId = b.dataset.id; break;
+    }
     case "mode": ui.mode = b.dataset.id; break;
-    case "hole": ui.hole[`${r.id}:${ui.groupIdx}:${ui.segId}`] = +b.dataset.n; break;
+    case "hole": {
+      const segs = segmentsOf(r), curSeg = segs.find(s => s.id === ui.segId), hk = `${r.id}:${ui.groupIdx}:${ui.segId}`;
+      await fillParForHole(r, curSeg, ui.hole[hk]);
+      ui.hole[hk] = +b.dataset.n; break;
+    }
     case "unit": ui.unit = unit() === "m" ? "yd" : "m"; lsSet("unit", ui.unit); break;
     case "plus": case "minus": {
       const n = +b.dataset.n, par = E.parOf(courseOf(r), r, n); let v = E.val(scoresOf(r.id), b.dataset.k, n);
-      v = !E.has(v) || v === "P" ? par : v; v = Math.min(20, Math.max(1, v + (a === "plus" ? 1 : -1)));
+      // The first tap always commits the par shown; only once a real score is saved do further taps step it by 1.
+      v = !E.has(v) || v === "P" ? par : Math.min(20, Math.max(1, v + (a === "plus" ? 1 : -1)));
       await writeScore(r.id, b.dataset.k, n, v); break;
     }
     case "pu": { const n = +b.dataset.n; const v = E.val(scoresOf(r.id), b.dataset.k, n); await writeScore(r.id, b.dataset.k, n, v === "P" ? null : "P"); break; }
@@ -564,10 +580,7 @@ view.addEventListener("click", async e => {
       const c = courseOf(r), segs = segmentsOf(r), segIdx = segs.findIndex(s => s.id === ui.segId), seg = segs[segIdx];
       const holes = E.segmentHoles(c, seg), hk = `${r.id}:${ui.groupIdx}:${ui.segId}`, n = ui.hole[hk], i = holes.indexOf(n);
       if (a === "next") {
-        if (trip().fillPar) {
-          const g = r.groups[ui.groupIdx];
-          for (const rw of scoreRows(r, g, seg)) if (!E.has(E.val(scoresOf(r.id), rw.key, n))) await writeScore(r.id, rw.key, n, E.parOf(c, r, n));
-        }
+        await fillParForHole(r, seg, n);
         if (i < holes.length - 1) ui.hole[hk] = holes[i + 1];
         else if (segs[segIdx + 1]) { ui.segId = segs[segIdx + 1].id; toast("Next segment"); }
         else toast("Round saved");
