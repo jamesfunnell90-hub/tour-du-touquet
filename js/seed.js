@@ -6,7 +6,7 @@ export function seedTrip() {
     pin: "2026",
     unit: "m",
     skinsMode: "net",
-    fillPar: true,
+    fillPar: false,
     currentRound: "r1",
     teams: {
       ab: { name: "Clean Shaven", colour: "blue", order: 1 },
