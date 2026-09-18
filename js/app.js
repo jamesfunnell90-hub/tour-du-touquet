@@ -584,10 +584,14 @@ function segPresetOf(segs, holesCount) {
   if (segs.length === 1 && segs[0].from === 1 && segs[0].to === holesCount) return "18";
   return "custom";
 }
+function prevRoundOf(d, r) {
+  return Object.values(d.rounds).filter(x => x.id !== r.id && (x.order || 0) < (r.order || 0)).sort((a, b) => (b.order || 0) - (a.order || 0))[0];
+}
 function roundEditor(r) {
   const d = ui.draft;
   const cl = club(r.clubId), c = courseOf(r);
   const assigned = {}; (r.groups || []).forEach((g, gi) => (g.playerIds || []).forEach(id => (assigned[id] = gi)));
+  const prev = prevRoundOf(d, r);
   let h = `<div class="backbar"><button class="btn sm" data-act="closeRound">‹ Rounds</button><b>${esc(r.label)}</b><button class="btn sm primary" data-act="save" ${ui.dirty ? "" : "disabled"}>Save</button></div>
   <section class="panel form">
     <div class="field"><div class="row2"><div><span class="lbl">Name</span><input class="in" data-rf="label" value="${esc(r.label)}"></div><div><span class="lbl">Date</span><input class="in" type="date" data-rf="date" value="${esc(r.date || "")}"></div></div></div>
@@ -604,7 +608,9 @@ function roundEditor(r) {
     h += `<section class="panel pad sub-panel" style="background:var(--surface)"><div class="row2"><div><span class="lbl">Tee time</span><input class="in" type="time" data-gi="${gi}" data-gf="time" value="${esc(g.time || "")}"></div><div style="display:flex;align-items:flex-end;justify-content:flex-end"><button class="btn sm danger" data-act="groupDel" data-gi="${gi}">Remove group</button></div></div>
       <div class="chips">${Object.entries(d.players).map(([id, p]) => `<button class="chipbtn ${assigned[id] !== undefined && assigned[id] !== gi ? "taken" : ""}" data-act="groupToggle" data-gi="${gi}" data-id="${id}" aria-pressed="${(g.playerIds || []).includes(id)}"><span class="sw" style="background:var(--c-${d.teams[p.team]?.colour || "black"})"></span>${esc(p.name)}</button>`).join("")}</div></section>`;
   });
-  h += `<button class="btn" data-act="groupAdd">+ Add group</button><p class="note">Tapping a player who's in another group moves them here.</p><h2>Segments</h2>`;
+  h += `<button class="btn" data-act="groupAdd">+ Add group</button>`;
+  if (prev) h += `<button class="btn" data-act="groupsFromBoard">Fill groups from ${esc(prev.label)}'s leaderboard</button><p class="note">Lowest total tees off first, highest total last, split evenly across the groups above in tee-time order.</p>`;
+  h += `<p class="note">Tapping a player who's in another group moves them here.</p><h2>Segments</h2>`;
   const holesCount = c?.holesCount || 18;
   const segs = r.segments || [];
   const preset = segPresetOf(segs, holesCount);
@@ -776,6 +782,19 @@ view.addEventListener("click", async e => {
     case "roundDel": if (!confirm("Delete this round? Its scores stay stored but won't show.")) return; delete d.rounds[b.dataset.id]; if (d.currentRound === b.dataset.id) d.currentRound = Object.keys(d.rounds)[0] || null; ui.more = "rounds"; markDirty(); redrawForm(); return;
     case "makeCurrent": d.currentRound = curRoundDraft().id; markDirty(); return;
     case "groupAdd": { const rr = curRoundDraft(); rr.groups.push({ id: "g" + Date.now().toString(36), time: "", playerIds: [] }); markDirty(); redrawForm(); return; }
+    case "groupsFromBoard": {
+      const rr = curRoundDraft(); const prev = prevRoundOf(d, rr);
+      if (!prev || !rr.groups.length) return;
+      const prevCourse = club(prev.clubId)?.courses.find(x => x.id === prev.courseId);
+      if (!prevCourse) { toast("Can't find " + prev.label + "'s course"); return; }
+      const board = E.individualBoard(d, [{ round: prev, course: prevCourse, scores: scoresOf(prev.id) }]).filter(x => Object.keys(x.cols).length);
+      const ranked = [...board].sort((a, b) => a.total - b.total).map(x => x.id);
+      const order = [...ranked, ...Object.keys(d.players).filter(id => !ranked.includes(id))];
+      const n = rr.groups.length;
+      rr.groups.forEach(g => (g.playerIds = []));
+      order.forEach((id, i) => rr.groups[Math.min(n - 1, Math.floor((i * n) / order.length))].playerIds.push(id));
+      markDirty(); redrawForm(); return;
+    }
     case "groupDel": curRoundDraft().groups.splice(+b.dataset.gi, 1); markDirty(); redrawForm(); return;
     case "groupToggle": {
       const rr = curRoundDraft(), gi = +b.dataset.gi, id = b.dataset.id, g = rr.groups[gi];
