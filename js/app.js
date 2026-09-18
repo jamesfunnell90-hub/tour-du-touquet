@@ -528,7 +528,7 @@ function vMore() {
   <h2>This phone</h2><section class="panel list">
     <button class="item" data-act="unit"><div><b>Distances</b><div class="sub">Showing ${unit() === "m" ? "metres" : "yards"} · tap to switch</div></div><span class="go">›</span></button>
     <div class="item" style="cursor:default"><div><b>Data</b><div class="sub">${S.state.mode === "live" ? "Live: shared with everyone who has the link" : "Demo mode: saved on this phone only. Add the Firebase config to share scores."}</div></div></div>
-    ${S.state.mode === "demo" ? `<button class="item" data-act="resetDemo"><div><b>Reset demo data</b><div class="sub">Clears scores and setup on this phone</div></div><span class="go">›</span></button>` : ""}
+    ${S.state.mode === "demo" ? `<button class="item" data-act="resetDemo"><div><b>Reset demo data</b><div class="sub">Clears scores and setup on this phone</div></div><span class="go">›</span></button>` : `<button class="item" data-act="resetScores"><div><b>Reset all scores</b><div class="sub">Clears every hole score and the change log for everyone. Keeps players, teams, handicaps and round setup.</div></div><span class="go">›</span></button>`}
   </section>
   <h2>Trip summary</h2><section class="panel tw"><table><tr><th class="l">Player</th><th>Eagles</th><th>Birdies</th><th>Pars</th><th>Pick-ups</th><th>Best 9</th></tr>
     ${stats.map(s => `<tr><td class="l">${sw(t.players[s.id]?.team)} <b>${esc(s.name)}</b></td><td>${s.eagles}</td><td>${s.birdies}</td><td>${s.pars}</td><td>${s.pickups}</td><td>${s.bestNine ? s.bestNine.pts : "–"}</td></tr>`).join("")}</table></section>
@@ -754,6 +754,10 @@ view.addEventListener("click", async e => {
     }
     case "betDel": { const t = structuredClone(trip()); t.bets = (t.bets || []).filter(x => x.id !== b.dataset.id); await S.saveTrip(t); break; }
     case "resetDemo": if (confirm("Clear all demo data on this phone?")) S.resetDemo(); return;
+    case "resetScores": {
+      if (!confirm("Reset every hole score and the change log for everyone? Players, teams, handicaps and round setup stay as they are. This can't be undone.")) return;
+      await S.resetScores(); toast("Scores reset"); return;
+    }
     case "open": ui.more = b.dataset.id; ui.draft = structuredClone(trip()); ui.dirty = false; window.scrollTo({ top: 0 }); break;
     case "close": if (ui.dirty && !confirm("Discard your changes?")) return; ui.more = null; ui.draft = null; ui.dirty = false; break;
     case "pin": { const v = $("#pin").value.trim(); if (v === String(trip().pin)) { ui.pinOk = true; lsSet("pin:" + TRIP_ID, true); } else { toast("Wrong PIN"); return; } break; }

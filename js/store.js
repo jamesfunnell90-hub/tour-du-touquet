@@ -20,6 +20,7 @@ export const saveTrip = trip => impl.saveTrip(trip);
 export const setScore = (roundId, key, n, value) => impl.setScore(roundId, key, n, value);
 export const addLog = entry => impl.addLog(entry);
 export const resetDemo = () => impl.reset && impl.reset();
+export const resetScores = () => impl.resetScores();
 
 // ---------------- Firebase ----------------
 async function firebaseStore(tripId) {
@@ -86,6 +87,12 @@ async function firebaseStore(tripId) {
       return fs.setDoc(fs.doc(db, "trips", tripId, "scores", rid), { s: { [key]: { ["h" + n]: v } } }, { merge: true });
     },
     addLog(entry) { return fs.addDoc(fs.collection(db, "trips", tripId, "log"), { ...entry, at: fs.serverTimestamp() }); },
+    async resetScores() {
+      const rids = Object.keys(state.trip?.rounds || {});
+      await Promise.all(rids.map(rid => fs.setDoc(fs.doc(db, "trips", tripId, "scores", rid), { s: {} })));
+      const logSnap = await fs.getDocs(fs.collection(db, "trips", tripId, "log"));
+      await Promise.all(logSnap.docs.map(d => fs.deleteDoc(d.ref)));
+    },
   };
 }
 
@@ -109,5 +116,6 @@ function demoStore(tripId) {
     },
     addLog(entry) { const l = read("log", []); l.unshift({ ...entry, at: Date.now() }); write("log", l.slice(0, 60)); load(); ping(); return Promise.resolve(); },
     reset() { try { Object.keys(localStorage).filter(k => k.startsWith(`tdt:${tripId}:`)).forEach(k => localStorage.removeItem(k)); } catch (e) {} location.reload(); },
+    resetScores() { write("scores", {}); write("log", []); load(); ping(); return Promise.resolve(); },
   };
 }
